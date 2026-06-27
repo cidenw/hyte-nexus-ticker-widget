@@ -15,13 +15,13 @@ $LocalIP = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
     Select-Object -First 1).IPAddress
 
 # ── Start HTTP listener ──────────────────────────────────────────────────────
+# http://+:PORT/ requires a URL ACL registered by install.ps1 (one-time, needs admin).
 $listener = [System.Net.HttpListener]::new()
-$listener.Prefixes.Add("http://localhost:${Port}/")
-if ($LocalIP) { $listener.Prefixes.Add("http://${LocalIP}:${Port}/") }
+$listener.Prefixes.Add("http://+:${Port}/")
 
 try { $listener.Start() }
 catch {
-    Write-Error "Could not start server on port ${Port}: $_"
+    Write-Error "Could not start server on port ${Port}. Run install.ps1 first to register the URL reservation. Error: $_"
     exit 1
 }
 
@@ -107,7 +107,7 @@ while ($listener.IsListening) {
     }
 
     # ── Static files ──────────────────────────────────────────────────────────
-    $rel      = ($path -eq '/') ? 'index.html' : $path.TrimStart('/')
+    $rel      = if ($path -eq '/') { 'index.html' } else { $path.TrimStart('/') }
     $fullPath = Join-Path $ScriptDir $rel
 
     # Prevent path traversal
@@ -117,8 +117,8 @@ while ($listener.IsListening) {
     }
 
     if (Test-Path $fullPath -PathType Leaf) {
-        $ext   = [System.IO.Path]::GetExtension($fullPath)
-        $mime  = if ($MIME.ContainsKey($ext)) { $MIME[$ext] } else { 'application/octet-stream' }
+        $ext  = [System.IO.Path]::GetExtension($fullPath)
+        $mime = if ($MIME.ContainsKey($ext)) { $MIME[$ext] } else { 'application/octet-stream' }
         $bytes = [System.IO.File]::ReadAllBytes($fullPath)
         Send-Response $res 200 $mime $bytes
     } else {

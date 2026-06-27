@@ -10,14 +10,28 @@ $InstallDir  = "$env:LOCALAPPDATA\Programs\HyteTickerWidget"
 $TaskName    = 'HyteTickerWidget'
 $WidgetPort  = 4000
 
+# ── Self-elevate if not running as admin (needed for URL ACL registration) ──
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)
+if (-not $isAdmin) {
+    Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    exit
+}
+
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host "  HYTE Nexus Ticker Widget — Installer" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+# ── Step 0: Register URL ACL so widget.ps1 can bind to all network interfaces
+Write-Host "[0/3] Registering network port reservation..." -ForegroundColor Yellow
+$urlAcl = "http://+:${WidgetPort}/"
+netsh http add urlacl url=$urlAcl user="$env:USERNAME" 2>&1 | Out-Null
+Write-Host "         Done. ($urlAcl reserved for $env:USERNAME)" -ForegroundColor Green
+
 # ── Step 1: Copy files ───────────────────────────────────────────────────────
-Write-Host "[1/3] Installing files to $InstallDir ..." -ForegroundColor Yellow
+Write-Host "[1/4] Installing files to $InstallDir ..." -ForegroundColor Yellow
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 
 $exclude = @('install.ps1', 'uninstall.ps1', '.git', 'node_modules', '.gitignore',
@@ -28,7 +42,7 @@ Get-ChildItem -Path $PSScriptRoot | Where-Object { $_.Name -notin $exclude } | F
 Write-Host "         Done." -ForegroundColor Green
 
 # ── Step 2: Register scheduled task ─────────────────────────────────────────
-Write-Host "[2/3] Registering auto-start task..." -ForegroundColor Yellow
+Write-Host "[2/4] Registering auto-start task..." -ForegroundColor Yellow
 
 $scriptPath  = Join-Path $InstallDir 'widget.ps1'
 $psExe       = "$PSHOME\powershell.exe"
@@ -67,7 +81,7 @@ Remove-Item $tmpXml -Force
 Write-Host "         Done." -ForegroundColor Green
 
 # ── Step 3: Start the server now ─────────────────────────────────────────────
-Write-Host "[3/3] Starting the widget server..." -ForegroundColor Yellow
+Write-Host "[3/4] Starting the widget server..." -ForegroundColor Yellow
 
 # Stop any existing instance
 Get-Process -Name powershell -ErrorAction SilentlyContinue | ForEach-Object {
@@ -88,6 +102,7 @@ $ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
                       $_.IPAddress -notlike '169.*' } |
        Select-Object -First 1).IPAddress
 
+Write-Host "[4/4] Detecting local IP..." -ForegroundColor Yellow
 $nexusUrl = if ($ip) { "http://${ip}:${WidgetPort}" } else { "http://YOUR_LOCAL_IP:${WidgetPort}" }
 
 try { Set-Clipboard -Value $nexusUrl } catch {}
