@@ -1,5 +1,7 @@
 # HYTE Nexus Ticker Widget
 
+![Widget preview](preview.png)
+
 A stock ticker widget for the **HYTE Y70 Touch Infinite** display running **HYTE Nexus 2.0**.  
 Hosted on Vercel — no installation, no local server, nothing to maintain.
 
@@ -37,6 +39,7 @@ Tap the **⚙ gear icon** directly on the display to change tickers, theme, colo
 - Dark / light theme with custom accent color picker
 - Configurable timezone (defaults to your OS local time)
 - Touch-friendly settings panel
+- Adjustable background opacity — works with Nexus iframe transparency
 
 ---
 
