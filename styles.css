@@ -361,6 +361,7 @@ html, body {
   flex-direction: column;
   gap: 8px;
 }
+.collapsible-body[hidden] { display: none; }
 
 .ticker-dir-section { display: flex; flex-direction: column; gap: 4px; }
 
