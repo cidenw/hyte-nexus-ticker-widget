@@ -1,37 +1,48 @@
 # HYTE Nexus Ticker Widget
 
-A lightweight, open-source stock ticker widget for the **HYTE Y70 Touch Infinite** display running **HYTE Nexus 2.0**. It renders live-ish price quotes in a responsive layout that adapts to any grid cell size you assign in Nexus.
-
-![Widget screenshot placeholder](https://via.placeholder.com/300x400/0d0d0d/22c55e?text=Ticker+Widget)
+A lightweight, open-source stock ticker widget for the **HYTE Y70 Touch Infinite** display running **HYTE Nexus 2.0**. It renders live prices in a responsive layout that adapts to any grid cell size you assign in Nexus.
 
 ## Features
 
-- Tracks any ticker available on [Stooq.com](https://stooq.com) (stocks, ETFs, indices)
-- No API key required — uses Stooq's free delayed/EOD CSV feed
-- Adapts automatically to small, medium, or tall Nexus grid cells (CSS container queries)
+- Live prices via Yahoo Finance — no API key required
+- Tracks any ticker Yahoo supports: ETFs, stocks, indices (`^GSPC`, `^NDX`)
+- Responsive layout via CSS container queries — adapts from a tiny cell to a tall column
 - Dark / light theme
+- Configurable timezone for market timestamps (defaults to your OS timezone)
 - Touch-friendly settings panel — change tickers without redeploying
 - Three-layer config: `config.json` → URL params → in-widget touch settings
-- Optional built-in local CORS proxy (`proxy.mjs`) for full offline control
+
+## How it works on the Y70 Touch Infinite
+
+1. Run the two servers on your PC (see Quick start below).
+2. In **HYTE Nexus**, add a **Web / iFrame** widget and paste `http://localhost:4000` as the URL.
+3. Resize the cell on the display — the widget layout adapts automatically.
+4. Tap the **⚙ gear icon** directly on the display to change tickers, theme, or timezone without touching any files.
+
+See [SETUP.md](SETUP.md) for step-by-step Nexus instructions and startup automation.
+
+---
 
 ## Default tickers
 
-`VWRA.L` (Vanguard FTSE All-World, London), `VOO` (Vanguard S&P 500, US), `SPY` (SPDR S&P 500, US)
+`VWRA.L` · `VOO` · `SPY`
 
-## Data source caveat
+## Quick start
 
-Data is sourced from **stooq.com** and is typically **delayed 15–20 minutes** or end-of-day. This is not a realtime feed. If you need realtime data, replace `fetchQuotes()` in `app.js` with a call to a keyed API (Finnhub, Polygon, Twelve Data) — the function interface is isolated for exactly this.
+```powershell
+git clone https://github.com/YOUR_USERNAME/hyte-nexus-ticker-widget.git
+cd hyte-nexus-ticker-widget
 
-## Ticker symbol format
+# Terminal 1 — serve the widget
+npx serve . -p 4000
 
-| Exchange | Display ticker | Stooq symbol |
-|---|---|---|
-| US (default) | `VOO`, `SPY`, `AAPL` | `voo.us`, `spy.us`, `aapl.us` |
-| London | `VWRA.L`, `LLOY.L` | `vwra.uk`, `lloy.uk` |
-| Frankfurt | `IWDA.DE` | `iwda.de` |
-| Amsterdam | `VWRL.AS` | `vwrl.nl` |
+# Terminal 2 — local proxy (required, handles Yahoo Finance CORS)
+node proxy.mjs
+```
 
-The widget auto-converts from display format. Add more suffix mappings in `SUFFIX_MAP` inside `app.js`.
+Then open `http://localhost:4000` in a browser or paste it into Nexus as a Web widget URL.
+
+See [SETUP.md](SETUP.md) for full Nexus integration steps.
 
 ## Configuration
 
@@ -42,7 +53,7 @@ The widget auto-converts from display format. Add more suffix mappings in `SUFFI
   "tickers": ["VWRA.L", "VOO", "SPY"],
   "refreshSeconds": 60,
   "theme": "dark",
-  "corsProxy": "https://corsproxy.io/?url=",
+  "timezone": "",
   "showChange": true,
   "showName": true
 }
@@ -50,49 +61,62 @@ The widget auto-converts from display format. Add more suffix mappings in `SUFFI
 
 | Key | Description | Default |
 |---|---|---|
-| `tickers` | Array of ticker symbols to display | `["VWRA.L","VOO","SPY"]` |
+| `tickers` | Array of Yahoo Finance ticker symbols | `["VWRA.L","VOO","SPY"]` |
 | `refreshSeconds` | Price refresh interval in seconds | `60` |
 | `theme` | `"dark"` or `"light"` | `"dark"` |
-| `corsProxy` | CORS proxy prefix (see SETUP.md) | `"https://corsproxy.io/?url="` |
+| `timezone` | IANA timezone string for timestamps. Empty = OS local | `""` |
 | `showChange` | Show price change and % | `true` |
-| `showName` | Show asset name below symbol | `true` |
+| `showName` | Show asset name | `true` |
 
 ### URL query params (override config.json)
 
-Append to the widget URL in the Nexus iframe field:
+Append to the Nexus iframe URL:
 
 ```
-http://localhost:3000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light
+http://localhost:4000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light&timezone=Europe/London
 ```
 
 | Param | Example |
 |---|---|
 | `tickers` | `VWRA.L,VOO,SPY` |
-| `refresh` | `30` (seconds) |
+| `refresh` | `30` |
 | `theme` | `light` or `dark` |
-| `proxy` | `https://corsproxy.io/?url=` or empty |
+| `timezone` | `Europe/London`, `America/New_York` |
 | `showChange` | `true` / `false` |
 | `showName` | `true` / `false` |
 
-### In-widget settings panel (override everything, persisted)
+### In-widget settings panel
 
-Tap the ⚙ gear icon on the widget to open a touch-friendly panel. Settings are saved to `localStorage` and survive refreshes.
+Tap the ⚙ gear icon to open a touch-friendly panel. All settings are saved to `localStorage` and persist across refreshes.
 
-## Project structure
+## Ticker symbols
+
+Use Yahoo Finance symbol format exactly:
+
+| Asset | Symbol |
+|---|---|
+| US ETFs / stocks | `VOO`, `SPY`, `AAPL` |
+| London-listed | `VWRA.L`, `VWRL.L` |
+| Indices | `^GSPC`, `^NDX`, `^FTSE` |
+| Crypto | `BTC-USD`, `ETH-USD` |
+
+## Architecture
 
 ```
 ticker-widget/
-  index.html     # Widget markup
+  index.html     # Widget markup + settings dialog
   styles.css     # Responsive styles (CSS container queries)
-  app.js         # Config, fetch, CSV parse, render, settings
+  app.js         # Config resolution, fetch, render, settings
   config.json    # Default configuration
-  proxy.mjs      # Optional local CORS proxy (Node.js, no deps)
+  proxy.mjs      # Local proxy — forwards requests to Yahoo Finance (avoids CORS)
   package.json   # npm scripts: serve, proxy
   README.md
   SETUP.md
   UNINSTALL.md
   LICENSE        # MIT
 ```
+
+**Why a local proxy?** Browsers block direct `fetch()` calls to Yahoo Finance due to CORS restrictions. `proxy.mjs` is a minimal Node.js server that forwards requests server-side and adds the required CORS headers. It only allowlists `query1.finance.yahoo.com`.
 
 ## License
 

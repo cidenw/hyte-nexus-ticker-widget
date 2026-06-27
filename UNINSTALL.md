@@ -1,37 +1,36 @@
 # Uninstall Guide
 
-## Remove from HYTE Nexus
+## 1. Remove from HYTE Nexus
 
 1. Open **HYTE Nexus**.
-2. Long-press or right-click the ticker widget on your Y70ti display layout.
+2. Long-press or right-click the ticker widget on your Y70ti layout.
 3. Select **Remove** / **Delete widget**.
 
-## Stop the local server
+## 2. Stop the servers
 
-Close the terminal running `npx serve . -p 3000`.
+Close both terminals:
+- The one running `npx serve . -p 4000`
+- The one running `node proxy.mjs`
 
-If you set it up as a Windows startup task/service:
-- **Task Scheduler**: open Task Scheduler → find the task → right-click → Delete.
-- **nssm**: run `nssm remove ticker-widget confirm` in an admin terminal.
+If you set them up as Task Scheduler tasks:
 
-## Stop the local CORS proxy (if used)
+1. Open **Task Scheduler**.
+2. Find the tasks you created for the widget and proxy.
+3. Right-click each → **Delete**.
 
-Close the terminal running `node proxy.mjs` (or remove its startup task the same way).
+## 3. Clear saved settings
 
-## Clear stored settings
+Open a browser tab to `http://localhost:4000` (while the server is still running), open DevTools (`F12`) → **Application** → **Local Storage** → `http://localhost:4000` → delete the `tickerCfg` key.
 
-Open a browser, navigate to `http://localhost:3000`, open DevTools → Application → Local Storage → `http://localhost:3000` → delete the `tickerCfg` key.
-
-Or paste this into the browser console while on the widget page:
-
+Or run this in the DevTools console:
 ```js
 localStorage.removeItem('tickerCfg');
 ```
 
-## Delete the widget files
+## 4. Delete the widget files
 
-```
-rmdir /s /q C:\widgets\ticker-widget
+```powershell
+Remove-Item -Recurse -Force C:\widgets\ticker-widget
 ```
 
-That's it — nothing else is installed system-wide.
+Nothing else is installed system-wide — `npx serve` and `node` are standard tools left untouched.

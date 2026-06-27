@@ -9,100 +9,72 @@
 
 ## Step 1 — Download the widget
 
-Clone or download this repo into a folder, e.g. `C:\widgets\ticker-widget`.
-
-```
-git clone https://github.com/your-username/hyte-nexus-ticker-widget.git C:\widgets\ticker-widget
+```powershell
+git clone https://github.com/YOUR_USERNAME/hyte-nexus-ticker-widget.git C:\widgets\ticker-widget
 cd C:\widgets\ticker-widget
 ```
 
 ---
 
-## Step 2 — Start the local server
+## Step 2 — Start both servers
 
+You need two terminals running side by side.
+
+**Terminal 1 — widget server:**
+```powershell
+npx serve . -p 4000
 ```
-npx serve . -p 3000
-```
 
-Leave this terminal running. The widget is now accessible at `http://localhost:3000`.
-
-**Optional: run as a background service on startup**
-
-Use [nssm](https://nssm.cc/) or Windows Task Scheduler to run `npx serve . -p 3000` automatically at login, pointing at the widget folder.
-
----
-
-## Step 3 — Handle CORS
-
-Stooq does not send CORS headers. The widget needs one of these options:
-
-### Option A — Public CORS proxy (default, easiest)
-
-The default `config.json` uses `https://corsproxy.io/?url=` — no setup required. The widget routes Stooq requests through this free public proxy. Requires internet access.
-
-### Option B — Built-in local proxy (self-contained, no third party)
-
-Run in a second terminal:
-
-```
+**Terminal 2 — local proxy** (handles Yahoo Finance CORS):
+```powershell
 node proxy.mjs
 ```
 
-Then update `config.json`:
-
-```json
-{
-  "corsProxy": "http://localhost:3001/proxy?url="
-}
-```
-
-This proxy only allowlists `stooq.com` requests.
-
-### Option C — Nexus webview with web security disabled
-
-Some embedded webviews disable CORS enforcement. If yours does (test by setting `corsProxy` to `""` and checking the browser console for errors), you don't need any proxy.
+Leave both terminals open. The widget is now at `http://localhost:4000`.
 
 ---
 
-## Step 4 — Add the widget to HYTE Nexus
+## Step 3 — Add the widget to HYTE Nexus
 
 1. Open **HYTE Nexus** on your PC.
-2. Click **+** / **Add widget** on the Y70ti display layout.
-3. Select **Web** (or **iFrame / URL**) widget type.
+2. Go to your Y70ti display layout and click **+ Add widget**.
+3. Select **Web** (or **iFrame / URL**) as the widget type.
 4. Paste the URL:
    ```
-   http://localhost:3000
+   http://localhost:4000
    ```
-   Or with URL params to override tickers without editing config.json:
-   ```
-   http://localhost:3000/?tickers=VWRA.L,VOO,SPY&refresh=60
-   ```
-5. Resize the widget cell to your preference. The widget adapts:
-   - **Narrow**: symbol + price only
-   - **Standard**: symbol, name, price, change
-   - **Tall**: all info + timestamps
+5. Resize the widget cell to your preference — the layout adapts automatically:
+   - **Narrow cell** → symbol + price only
+   - **Standard cell** → symbol, name, price, change
+   - **Tall cell** → all info + market timestamps
 
 ---
 
-## Step 5 — Customize tickers
+## Step 4 — Customize tickers
 
-**Via in-widget settings (recommended):** Tap the ⚙ gear icon on the widget. Enter tickers one per line. Tap **Save & Refresh**.
+**Touch the ⚙ gear icon** on the widget to open the settings panel. You can change tickers, refresh interval, theme, and timezone directly from the display. Settings persist across restarts.
 
-**Via config.json:** Edit `"tickers"` array and restart the server (or the widget auto-refreshes on next cycle).
+**Via URL params** — edit the Nexus URL field directly:
+```
+http://localhost:4000/?tickers=VWRA.L,VOO,SPY,BTC-USD&refresh=30&theme=light
+```
 
-**Via URL:** Append `?tickers=AAPL,MSFT,TSLA` to the Nexus URL field.
+**Via config.json** — edit the file and refresh the widget.
 
 ---
 
-## Hosting on Vercel (alternative to local server)
+## Step 5 — Run on startup (optional)
 
-If you prefer a public URL instead of running a local server:
+To start both servers automatically when Windows boots, use Task Scheduler:
 
-1. Push this repo to GitHub.
-2. Sign up at [vercel.com](https://vercel.com) and import the repo.
-3. Vercel will detect the static site and deploy automatically.
-4. Use the Vercel preview URL in the Nexus widget field.
-5. **Note:** With Vercel hosting, you still need a CORS proxy (Option A by default). Option B (local proxy) won't apply since the HTML is served from the cloud.
+1. Open **Task Scheduler** → Create Basic Task.
+2. Trigger: **At log on**.
+3. Action: **Start a program**
+   - Program: `node`
+   - Arguments: `C:\widgets\ticker-widget\proxy.mjs`
+4. Repeat for the widget server, using:
+   - Program: `npx`
+   - Arguments: `serve C:\widgets\ticker-widget -p 4000`
 
 ---
 
@@ -110,8 +82,9 @@ If you prefer a public URL instead of running a local server:
 
 | Symptom | Fix |
 |---|---|
-| Widget shows `—` / loading forever | Check browser console in Nexus (if accessible) or a desktop browser pointing at the URL |
-| CORS error in console | Ensure `corsProxy` in `config.json` is set, or run `proxy.mjs` (Option B) |
-| Ticker shows stale data | Stooq data is delayed; the widget dims the card and shows last known value |
-| `VWRA.L` not found | Stooq symbol is `vwra.uk` — the widget converts automatically. Check your ticker string has `.L` suffix |
-| Port 3000 in use | Change `-p 3000` to another port; update the Nexus URL accordingly |
+| Widget shows `—` forever | Make sure both servers are running (ports 4000 and 4001) |
+| CORS error in browser console | `proxy.mjs` is not running — start it with `node proxy.mjs` |
+| `proxy.mjs` port 4001 already in use | Change `PORT` in `proxy.mjs` and update `PROXY_BASE` in `app.js` to match |
+| Ticker not found / wrong price | Verify the symbol on [finance.yahoo.com](https://finance.yahoo.com) — use the exact Yahoo symbol |
+| Timestamps in wrong timezone | Open ⚙ settings and enter your timezone, e.g. `Europe/London` |
+| Port 4000 already in use | Change `-p 4000` in the serve command and update the Nexus URL |
