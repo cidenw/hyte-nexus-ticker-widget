@@ -332,6 +332,16 @@ async function init() {
     });
   });
 
+  // Ticker directory collapsible
+  document.getElementById('ticker-dir-toggle').addEventListener('click', () => {
+    const body = document.getElementById('ticker-dir');
+    const btn  = document.getElementById('ticker-dir-toggle');
+    const open = body.hidden;
+    body.hidden = !open;
+    btn.setAttribute('aria-expanded', open);
+    btn.classList.toggle('open', open);
+  });
+
   // Copy URL
   document.getElementById('copy-url-btn').addEventListener('click', () => {
     const url = buildCopyUrl();

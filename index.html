@@ -46,6 +46,49 @@
       </p>
     </div>
 
+    <!-- Ticker directory -->
+    <div class="settings-group">
+      <button class="collapsible-header" id="ticker-dir-toggle" aria-expanded="false">
+        <span>Find ticker symbols</span>
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="collapsible-body" id="ticker-dir" hidden>
+        <div class="ticker-dir-section">
+          <span class="ticker-dir-label">US ETFs</span>
+          <div class="ticker-dir-chips">
+            <span class="dir-chip">VOO</span><span class="dir-chip">SPY</span><span class="dir-chip">QQQ</span><span class="dir-chip">VTI</span><span class="dir-chip">ARKK</span>
+          </div>
+        </div>
+        <div class="ticker-dir-section">
+          <span class="ticker-dir-label">Global ETFs (London)</span>
+          <div class="ticker-dir-chips">
+            <span class="dir-chip">VWRA.L</span><span class="dir-chip">VWRL.L</span><span class="dir-chip">IWDA.L</span><span class="dir-chip">CSPX.L</span>
+          </div>
+        </div>
+        <div class="ticker-dir-section">
+          <span class="ticker-dir-label">US Stocks</span>
+          <div class="ticker-dir-chips">
+            <span class="dir-chip">AAPL</span><span class="dir-chip">MSFT</span><span class="dir-chip">NVDA</span><span class="dir-chip">TSLA</span><span class="dir-chip">AMZN</span>
+          </div>
+        </div>
+        <div class="ticker-dir-section">
+          <span class="ticker-dir-label">Indices</span>
+          <div class="ticker-dir-chips">
+            <span class="dir-chip">^GSPC</span><span class="dir-chip">^NDX</span><span class="dir-chip">^DJI</span><span class="dir-chip">^FTSE</span><span class="dir-chip">^N225</span>
+          </div>
+        </div>
+        <div class="ticker-dir-section">
+          <span class="ticker-dir-label">Crypto</span>
+          <div class="ticker-dir-chips">
+            <span class="dir-chip">BTC-USD</span><span class="dir-chip">ETH-USD</span><span class="dir-chip">SOL-USD</span>
+          </div>
+        </div>
+        <p class="settings-note" style="margin-top:8px">
+          Look up any symbol at:<br><code>finance.yahoo.com</code>
+        </p>
+      </div>
+    </div>
+
     <!-- Refresh interval stepper -->
     <div class="settings-group">
       <label>Refresh interval</label>

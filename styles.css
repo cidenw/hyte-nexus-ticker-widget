@@ -334,6 +334,61 @@ html, body {
   font-size: 11px;
 }
 
+/* ── Collapsible ticker directory ── */
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color .15s;
+}
+.collapsible-header:hover { border-color: var(--accent); }
+.collapsible-header .chevron { transition: transform .2s; flex-shrink: 0; }
+.collapsible-header.open .chevron { transform: rotate(180deg); }
+
+.collapsible-body {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ticker-dir-section { display: flex; flex-direction: column; gap: 4px; }
+
+.ticker-dir-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+}
+
+.ticker-dir-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dir-chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 16px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .03em;
+}
+
 /* ── Refresh stepper ── */
 .stepper-row {
   display: flex;
