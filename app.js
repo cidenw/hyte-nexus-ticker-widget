@@ -24,6 +24,12 @@ function hexToHsl(hex) {
   return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
 }
 
+function applyOpacity(pct) {
+  const a = (pct / 100).toFixed(2);
+  document.documentElement.style.setProperty('--bg-alpha', a);
+  document.documentElement.style.setProperty('--surface-alpha', a);
+}
+
 function applyAccentColor(hex) {
   const [h, s] = hexToHsl(hex);
   const root = document.documentElement;
@@ -66,9 +72,11 @@ async function loadConfig() {
   if (p.has('showChange')) CFG.showChange      = p.get('showChange') !== 'false';
   if (p.has('showName'))   CFG.showName        = p.get('showName') !== 'false';
   if (p.has('accent'))     CFG.accentColor     = p.get('accent');
+  if (p.has('opacity'))    CFG.opacity         = parseInt(p.get('opacity'), 10);
 
   applyTheme(CFG.theme);
   if (CFG.accentColor) applyAccentColor(CFG.accentColor);
+  applyOpacity(CFG.opacity ?? 100);
 }
 
 function saveCfgToStorage(patch) {
@@ -268,6 +276,7 @@ function buildCopyUrl() {
   });
   if (CFG.timezone) p.set('timezone', CFG.timezone);
   if (accent && accent !== '#3b82f6') p.set('accent', accent);
+  if (CFG.opacity != null && CFG.opacity !== 100) p.set('opacity', CFG.opacity);
   return `${base}?${p.toString()}`;
 }
 
@@ -276,6 +285,9 @@ function openSettings() {
   document.getElementById('settings-accent').value        = CFG.accentColor || '#3b82f6';
   document.getElementById('settings-showchange').checked  = CFG.showChange !== false;
   document.getElementById('settings-showname').checked    = CFG.showName  !== false;
+  const opacityVal = CFG.opacity ?? 100;
+  document.getElementById('settings-opacity').value       = opacityVal;
+  document.getElementById('opacity-value').textContent    = `${opacityVal}%`;
   document.getElementById('copy-url-label').textContent   = 'Copy Nexus URL';
   buildTickerChips();
   updateRefreshDisplay();
@@ -293,7 +305,10 @@ function saveSettings() {
   const showChange  = document.getElementById('settings-showchange').checked;
   const showName    = document.getElementById('settings-showname').checked;
 
-  const patch = { tickers: CFG.tickers, theme, accentColor, showChange, showName, refreshSeconds: CFG.refreshSeconds };
+  const opacity = parseInt(document.getElementById('settings-opacity').value, 10);
+  CFG.opacity = opacity;
+  applyOpacity(opacity);
+  const patch = { tickers: CFG.tickers, theme, accentColor, showChange, showName, refreshSeconds: CFG.refreshSeconds, opacity };
   Object.assign(CFG, patch);
   saveCfgToStorage(patch);
   applyTheme(theme);
@@ -346,6 +361,13 @@ async function init() {
       updateThemeToggle(btn.dataset.value);
       applyTheme(btn.dataset.value);
     });
+  });
+
+  // Opacity slider live preview
+  document.getElementById('settings-opacity').addEventListener('input', e => {
+    const v = parseInt(e.target.value, 10);
+    document.getElementById('opacity-value').textContent = `${v}%`;
+    applyOpacity(v);
   });
 
   // Add ticker
