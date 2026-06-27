@@ -1,0 +1,8 @@
+{
+  "tickers": ["VWRA.L", "VOO", "SPY"],
+  "refreshSeconds": 60,
+  "theme": "dark",
+  "showChange": true,
+  "showName": true,
+  "timezone": ""
+}

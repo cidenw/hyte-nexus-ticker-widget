@@ -1,0 +1,11 @@
+{
+  "name": "hyte-nexus-ticker-widget",
+  "version": "1.0.0",
+  "description": "Stock ticker widget for HYTE Nexus Y70 Touch Infinite display",
+  "scripts": {
+    "serve": "npx serve . -p 3000",
+    "proxy": "node proxy.mjs"
+  },
+  "keywords": ["hyte", "nexus", "widget", "ticker", "stock"],
+  "license": "MIT"
+}

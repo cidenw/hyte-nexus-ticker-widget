@@ -1,0 +1,311 @@
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #f0f0f0;
+  --text-muted: #888;
+  --pos: #22c55e;
+  --neg: #ef4444;
+  --accent: #3b82f6;
+  --radius: 10px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="light"] {
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --border: #e0e0e0;
+  --text: #111111;
+  --text-muted: #666;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  overflow: hidden;
+}
+
+/* ── Widget shell ── */
+#widget {
+  container-type: size;
+  container-name: widget;
+  width: 100%; height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 6px;
+}
+
+/* ── Header ── */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+#title {
+  font-size: clamp(10px, 3cqw, 14px);
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+#last-update {
+  font-size: clamp(9px, 2.5cqw, 11px);
+  color: var(--text-muted);
+}
+
+#gear-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .2s, background .2s;
+  touch-action: manipulation;
+}
+#gear-btn:hover { color: var(--text); background: var(--border); }
+#gear-btn svg { width: 16px; height: 16px; }
+
+/* ── Status bar ── */
+#status {
+  font-size: 11px;
+  color: var(--neg);
+  padding: 4px 8px;
+  background: color-mix(in srgb, var(--neg) 10%, transparent);
+  border-radius: 6px;
+  display: none;
+  flex-shrink: 0;
+}
+
+/* ── Ticker list ── */
+#ticker-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.ticker-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: clamp(8px, 2cqh, 14px) clamp(10px, 2.5cqw, 16px);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  transition: opacity .3s;
+}
+
+.ticker-card.stale { opacity: .6; }
+
+.ticker-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.ticker-symbol {
+  font-size: clamp(13px, 3.5cqw, 20px);
+  font-weight: 700;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.ticker-name {
+  font-size: clamp(9px, 2.2cqw, 12px);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.ticker-bottom {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ticker-price {
+  font-size: clamp(16px, 5cqw, 28px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+}
+
+.ticker-price.loading { color: var(--text-muted); }
+
+.ticker-change {
+  font-size: clamp(10px, 2.8cqw, 15px);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ticker-change.pos { color: var(--pos); }
+.ticker-change.neg { color: var(--neg); }
+
+.ticker-meta {
+  font-size: clamp(8px, 2cqw, 10px);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Container query: very narrow widget — hide name & meta */
+@container widget (max-width: 180px) {
+  .ticker-name, .ticker-meta { display: none; }
+  .ticker-change { font-size: 10px; }
+}
+
+/* Container query: very short widget — compact padding */
+@container widget (max-height: 200px) {
+  .ticker-card { padding: 6px 10px; gap: 0; }
+  .ticker-meta { display: none; }
+}
+
+/* ── Settings overlay ── */
+#settings-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 99;
+}
+
+#settings-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--surface);
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+  overflow-y: auto;
+}
+
+#settings-panel.open,
+#settings-panel.open + #settings-overlay,
+#settings-overlay:has(+ #settings-panel.open) {
+  display: flex;
+}
+
+/* simpler toggle — show both when panel is open */
+#settings-panel.open { display: flex; }
+#settings-panel.open ~ #settings-overlay { display: block; }
+
+#settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+#settings-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#settings-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  touch-action: manipulation;
+}
+#settings-close:hover { color: var(--text); background: var(--border); }
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.settings-group textarea,
+.settings-group input[type="text"],
+.settings-group input[type="number"],
+.settings-group select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font);
+  width: 100%;
+  outline: none;
+  transition: border-color .2s;
+}
+
+.settings-group textarea:focus,
+.settings-group input:focus,
+.settings-group select:focus { border-color: var(--accent); }
+
+.settings-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: 18px; height: 18px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.checkbox-row span { font-size: 14px; }
+
+#settings-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+#settings-save {
+  margin-top: auto;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: opacity .2s;
+}
+#settings-save:hover { opacity: .85; }

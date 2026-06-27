@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ticker Widget</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="widget">
+    <div id="header">
+      <span id="title">Markets</span>
+      <span id="last-update"></span>
+      <button id="gear-btn" title="Settings" aria-label="Open settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="ticker-list" aria-live="polite" aria-label="Ticker prices"></div>
+  </div>
+
+  <!-- Settings panel -->
+  <div id="settings-panel" role="dialog" aria-label="Widget settings" aria-modal="true">
+    <div id="settings-header">
+      <h2>Settings</h2>
+      <button id="settings-close" aria-label="Close settings">&#x2715;</button>
+    </div>
+
+    <div class="settings-group">
+      <label for="settings-tickers">Tickers (one per line)</label>
+      <textarea id="settings-tickers" placeholder="VWRA.L&#10;VOO&#10;SPY"></textarea>
+    </div>
+
+    <div class="settings-group">
+      <label for="settings-refresh">Refresh interval (seconds)</label>
+      <input type="number" id="settings-refresh" min="10" max="3600" />
+    </div>
+
+    <div class="settings-group">
+      <label for="settings-theme">Theme</label>
+      <select id="settings-theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+
+    <div class="settings-group">
+      <label for="settings-timezone">Timezone (blank = OS local)</label>
+      <input type="text" id="settings-timezone" placeholder="e.g. Europe/London, America/New_York" />
+    </div>
+
+    <div class="settings-group">
+      <div class="checkbox-row">
+        <input type="checkbox" id="settings-showchange" />
+        <span>Show price change</span>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="settings-showname" />
+        <span>Show asset name</span>
+      </div>
+    </div>
+
+    <p id="settings-hint">
+      Tickers use Yahoo Finance data (realtime/15-min delay).<br>
+      Use Yahoo symbols exactly: <code>VWRA.L</code>, <code>VOO</code>, <code>^GSPC</code>.
+    </p>
+
+    <button id="settings-save">Save &amp; Refresh</button>
+  </div>
+  <div id="settings-overlay"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
