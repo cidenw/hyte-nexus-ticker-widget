@@ -1,5 +1,5 @@
-// Proxy routes to Yahoo Finance server-side (avoids browser CORS restrictions)
-const PROXY_BASE = 'http://localhost:4001/proxy?ticker=';
+// Same-origin API — widget.ps1 serves both the HTML and this endpoint on port 4000
+const PROXY_BASE = '/api/quote?ticker=';
 
 // Preset accent swatches
 const COLOR_PRESETS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#06b6d4', '#f59e0b', '#ffffff'];
@@ -235,7 +235,7 @@ async function loadStartupStatus() {
   const checkbox = document.getElementById('settings-startup');
   const label = document.getElementById('startup-label');
   try {
-    const res = await fetch('http://localhost:4001/api/startup');
+    const res = await fetch('/api/startup');
     if (!res.ok) throw new Error();
     const { enabled } = await res.json();
     checkbox.checked = enabled;
@@ -253,7 +253,7 @@ async function toggleStartup(enabled) {
   const label = document.getElementById('startup-label');
   label.textContent = 'Updating...';
   try {
-    await fetch('http://localhost:4001/api/startup', {
+    await fetch('/api/startup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled }),

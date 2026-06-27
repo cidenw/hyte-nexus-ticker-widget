@@ -1,87 +1,83 @@
 # Setup Guide
 
-## The easy way — Installer
+## Requirements
+
+- Windows 11 (PowerShell is built in — nothing else to install)
+- HYTE Nexus 2.0 with your Y70 Touch Infinite connected
+
+---
+
+## Installer (recommended)
 
 1. Download or clone this repo to your PC.
-2. Right-click **`install.ps1`** → **"Run with PowerShell"**.
-   - If you see a blue security prompt, click **"Run anyway"** (or **"More info" → "Run anyway"**).
-3. The installer will:
-   - Install Node.js automatically if it's not already on your PC
-   - Copy the widget files to `%LOCALAPPDATA%\Programs\HyteTickerWidget`
-   - Create two background services that start silently with Windows
-   - Start both services immediately
-   - Print your URL and copy it to the clipboard
-4. Open **HYTE Nexus**, add a **Web** / **iFrame** widget, and paste the URL.
-5. Done — resize the cell and use the ⚙ gear icon to customise.
+2. Right-click **`install.ps1`** → **Run with PowerShell**.
+   - If you see a blue security warning, click **More info → Run anyway**.
+3. Wait for the installer to finish — it prints something like:
+
+   ```
+   Paste this URL into HYTE Nexus as a Web widget:
+
+      http://192.168.1.42:4000
+
+   (URL copied to clipboard)
+   ```
+
+4. Open **HYTE Nexus** on your PC.
+5. On the Y70ti layout, click **+ Add widget** → choose **Web** (or **iFrame / URL**).
+6. Paste the URL from step 3 into the URL field.
+7. Resize the widget cell to your liking — the layout adapts automatically.
+
+> **Why not `localhost`?** HYTE Nexus resolves the URL from the display's own context and doesn't recognise `localhost`. The installer automatically finds and gives you your PC's local network IP.
 
 ---
 
-## Step by step (manual, for developers)
+## What the installer does
 
-### Prerequisites
+- Copies widget files to `%LOCALAPPDATA%\Programs\HyteTickerWidget`
+- Creates a Windows Task Scheduler task called **HyteTickerWidget** that starts `widget.ps1` silently at login
+- Starts the server immediately so you don't need to reboot
+- Prints and copies the Nexus URL to your clipboard
 
-- [Node.js](https://nodejs.org/) v18+ on the PC driving the Y70 Touch Infinite
-- HYTE Nexus 2.0 installed and your Y70ti display detected
+---
 
-### 1 — Start the proxy server
+## Customising the widget
 
-```powershell
-node proxy.mjs
-```
-
-Leave this terminal open. The proxy fetches Yahoo Finance data server-side (required to avoid browser CORS restrictions) and also handles the "Start with Windows" toggle in the settings panel.
-
-### 2 — Start the widget server
-
-In a second terminal:
-
-```powershell
-node server.mjs
-```
-
-### 3 — Find your local IP
-
-HYTE Nexus does not resolve `localhost` in iframe URLs. You need your PC's network IP:
-
-```powershell
-ipconfig
-```
-
-Look for **IPv4 Address** under your active adapter (Wi-Fi or Ethernet), e.g. `192.168.1.42`.
-
-### 4 — Add to HYTE Nexus
-
-1. Open **HYTE Nexus** → your Y70ti layout → **+ Add widget**.
-2. Select **Web** (or **iFrame / URL**) widget type.
-3. Paste the URL using your local IP:
-   ```
-   http://192.168.1.42:4000
-   ```
-4. Resize the cell — the layout adapts automatically:
-   - **Narrow** → symbol + price only
-   - **Standard** → symbol, name, price, change
-   - **Tall** → all info + market timestamps
-
-### 5 — Customise
+### From the touch display (easiest)
 
 Tap the **⚙ gear icon** on the widget to open the settings panel:
-- Add or remove tickers (one per line, use Yahoo Finance symbols)
-- Change refresh interval, theme, accent color, timezone
-- Toggle **"Start with Windows"** (only works when installed via `install.ps1`)
+
+| Setting | What it does |
+|---|---|
+| Tickers | Add/remove tickers (one per line, use Yahoo Finance symbols) |
+| Refresh interval | How often prices update (seconds) |
+| Theme | Dark or light |
+| Accent color | Pick a color — backgrounds are derived automatically |
+| Timezone | Leave blank for your PC's local time, or enter e.g. `Europe/London` |
+| Start with Windows | Toggle auto-start on or off without touching any files |
+
+### Via URL params
+
+Append parameters to the Nexus URL:
+
+```
+http://192.168.1.42:4000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light
+```
+
+### Via config.json
+
+Edit `%LOCALAPPDATA%\Programs\HyteTickerWidget\config.json` and refresh the widget.
 
 ---
 
-## Run on startup (manual, without installer)
+## Manual run (developers)
 
-Use Task Scheduler to run both servers at login with no visible window:
+No installer needed — just run:
 
-1. Open **Task Scheduler** → **Create Basic Task**.
-2. Trigger: **At log on** (current user only).
-3. Action: **Start a program**
-   - Program: `node` (full path, e.g. `C:\Program Files\nodejs\node.exe`)
-   - Arguments: `"C:\path\to\ticker-widget\proxy.mjs"`
-4. In **Properties → Settings**: uncheck "Stop task if it runs longer than".
-5. Repeat for `server.mjs` with a 5-second delay.
+```powershell
+powershell -File widget.ps1
+```
+
+The terminal will print the URL to use. Press `Ctrl+C` to stop.
 
 ---
 
@@ -89,10 +85,9 @@ Use Task Scheduler to run both servers at login with no visible window:
 
 | Symptom | Fix |
 |---|---|
-| Widget shows `—` forever | Make sure both servers are running (ports 4000 and 4001) |
-| CORS error | `proxy.mjs` not running — start it with `node proxy.mjs` |
-| Nexus shows blank / won't load | Use your local IP, not `localhost` |
-| "Start with Windows" greyed out | Run `install.ps1` first to register the scheduled tasks |
-| Port already in use | Change `PORT` in `server.mjs` / `PROXY_PORT` in `proxy.mjs` and update Nexus URL |
-| Wrong timezone on timestamps | Open ⚙ settings → enter IANA timezone e.g. `Europe/London` |
-| PowerShell blocked by policy | Run: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` then retry |
+| Widget shows `—` / loading forever | The server isn't running. Re-run `install.ps1` or start `widget.ps1` manually |
+| Nexus shows blank / can't connect | Make sure you're using the local IP (e.g. `192.168.1.42`), not `localhost` |
+| IP changed and widget stopped working | Re-run `install.ps1` — it detects the current IP |
+| "Start with Windows" toggle greyed out | Run `install.ps1` first to register the scheduled task |
+| PowerShell script blocked | Open PowerShell and run: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
+| Port 4000 already in use | Edit `widget.ps1`, change `$Port = 4000` to another port, update Nexus URL |

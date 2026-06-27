@@ -6,7 +6,7 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 $InstallDir = "$env:LOCALAPPDATA\Programs\HyteTickerWidget"
-$TaskNames  = @('HyteTickerWidget-Server', 'HyteTickerWidget-Proxy')
+$TaskName   = 'HyteTickerWidget'
 
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
@@ -14,22 +14,18 @@ Write-Host "  HYTE Nexus Ticker Widget — Uninstaller" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# ── Stop scheduled tasks ─────────────────────────────────────────────────────
-Write-Host "[1/3] Stopping and removing scheduled tasks..." -ForegroundColor Yellow
-foreach ($name in $TaskNames) {
-    schtasks /End    /TN $name 2>&1 | Out-Null
-    schtasks /Delete /TN $name /F 2>&1 | Out-Null
-}
+# ── Stop and remove scheduled task ───────────────────────────────────────────
+Write-Host "[1/3] Removing auto-start task..." -ForegroundColor Yellow
+schtasks /End    /TN $TaskName 2>&1 | Out-Null
+schtasks /Delete /TN $TaskName /F 2>&1 | Out-Null
 Write-Host "         Done." -ForegroundColor Green
 
-# ── Kill running Node processes for this widget ──────────────────────────────
-Write-Host "[2/3] Stopping running servers..." -ForegroundColor Yellow
-Get-Process -Name node -ErrorAction SilentlyContinue | ForEach-Object {
+# ── Kill running widget server process ───────────────────────────────────────
+Write-Host "[2/3] Stopping widget server..." -ForegroundColor Yellow
+Get-Process -Name powershell -ErrorAction SilentlyContinue | ForEach-Object {
     try {
-        $cmd = (Get-WmiObject Win32_Process -Filter "ProcessId=$($_.Id)").CommandLine
-        if ($cmd -like "*HyteTickerWidget*" -or $cmd -like "*proxy.mjs*" -or $cmd -like "*server.mjs*") {
-            $_ | Stop-Process -Force
-        }
+        $cmd = (Get-WmiObject Win32_Process -Filter "ProcessId=$($_.Id)" -ErrorAction SilentlyContinue).CommandLine
+        if ($cmd -like "*HyteTickerWidget*") { $_ | Stop-Process -Force -ErrorAction SilentlyContinue }
     } catch {}
 }
 Write-Host "         Done." -ForegroundColor Green
