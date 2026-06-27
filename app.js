@@ -1,6 +1,50 @@
 // Proxy routes to Yahoo Finance server-side (avoids browser CORS restrictions)
 const PROXY_BASE = 'http://localhost:4001/proxy?ticker=';
 
+// Preset accent swatches
+const COLOR_PRESETS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#22c55e', '#06b6d4', '#f59e0b', '#ffffff'];
+
+// --- Color utilities ---
+function hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) { h = s = 0; }
+  else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+      case g: h = ((b - r) / d + 2) / 6; break;
+      case b: h = ((r - g) / d + 4) / 6; break;
+    }
+  }
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function applyAccentColor(hex) {
+  const [h, s] = hexToHsl(hex);
+  const root = document.documentElement;
+  root.style.setProperty('--accent', hex);
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  if (isDark) {
+    root.style.setProperty('--bg',      `hsl(${h},${Math.min(s, 20)}%,6%)`);
+    root.style.setProperty('--surface', `hsl(${h},${Math.min(s, 15)}%,11%)`);
+    root.style.setProperty('--border',  `hsl(${h},${Math.min(s, 12)}%,20%)`);
+  } else {
+    root.style.setProperty('--bg',      `hsl(${h},${Math.min(s, 15)}%,95%)`);
+    root.style.setProperty('--surface', `hsl(${h},${Math.min(s, 10)}%,100%)`);
+    root.style.setProperty('--border',  `hsl(${h},${Math.min(s, 10)}%,85%)`);
+  }
+}
+
+function resetAccentColor() {
+  const root = document.documentElement;
+  ['--accent', '--bg', '--surface', '--border'].forEach(v => root.style.removeProperty(v));
+}
+
 // --- Config resolution ---
 let CFG = {};
 
@@ -26,6 +70,7 @@ async function loadConfig() {
   } catch {}
 
   applyTheme(CFG.theme);
+  if (CFG.accentColor) applyAccentColor(CFG.accentColor);
 }
 
 function saveCfgToStorage(patch) {
@@ -38,6 +83,7 @@ function saveCfgToStorage(patch) {
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+  if (CFG.accentColor) applyAccentColor(CFG.accentColor);
 }
 
 // --- Data fetching ---
@@ -145,6 +191,31 @@ function setStatus(msg) {
 }
 
 // --- Settings panel ---
+function buildSwatches() {
+  const container = document.getElementById('color-swatches');
+  container.innerHTML = '';
+  const current = CFG.accentColor || '#3b82f6';
+  COLOR_PRESETS.forEach(hex => {
+    const s = document.createElement('button');
+    s.className = 'swatch' + (hex === current ? ' active' : '');
+    s.style.background = hex;
+    s.title = hex;
+    s.addEventListener('click', () => {
+      document.getElementById('settings-accent').value = hex;
+      container.querySelectorAll('.swatch').forEach(el => el.classList.remove('active'));
+      s.classList.add('active');
+    });
+    container.appendChild(s);
+  });
+
+  // Sync swatch highlight when color picker changes
+  document.getElementById('settings-accent').addEventListener('input', e => {
+    container.querySelectorAll('.swatch').forEach(el => {
+      el.classList.toggle('active', el.title === e.target.value);
+    });
+  });
+}
+
 function openSettings() {
   document.getElementById('settings-panel').classList.add('open');
   document.getElementById('settings-tickers').value = CFG.tickers.join('\n');
@@ -153,6 +224,8 @@ function openSettings() {
   document.getElementById('settings-showchange').checked = CFG.showChange !== false;
   document.getElementById('settings-showname').checked = CFG.showName !== false;
   document.getElementById('settings-timezone').value = CFG.timezone || '';
+  document.getElementById('settings-accent').value = CFG.accentColor || '#3b82f6';
+  buildSwatches();
 }
 
 function closeSettings() {
@@ -167,11 +240,13 @@ function saveSettings() {
   const showChange = document.getElementById('settings-showchange').checked;
   const showName = document.getElementById('settings-showname').checked;
   const timezone = document.getElementById('settings-timezone').value.trim();
+  const accentColor = document.getElementById('settings-accent').value;
 
-  const patch = { tickers, refreshSeconds, theme, showChange, showName, timezone };
+  const patch = { tickers, refreshSeconds, theme, showChange, showName, timezone, accentColor };
   Object.assign(CFG, patch);
   saveCfgToStorage(patch);
   applyTheme(theme);
+  if (accentColor) applyAccentColor(accentColor);
   closeSettings();
   resetTimer();
   fetchQuotes();

@@ -40,7 +40,10 @@ npx serve . -p 4000
 node proxy.mjs
 ```
 
-Then open `http://localhost:4000` in a browser or paste it into Nexus as a Web widget URL.
+Then open `http://localhost:4000` in a browser to verify it works.
+
+> **Nexus URL:** Use your PC's local IP instead of `localhost` — Nexus doesn't resolve it.
+> Find it with `ipconfig` (look for IPv4 Address), e.g. `http://192.168.1.42:4000`.
 
 See [SETUP.md](SETUP.md) for full Nexus integration steps.
 

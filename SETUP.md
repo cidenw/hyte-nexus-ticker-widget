@@ -34,14 +34,24 @@ Leave both terminals open. The widget is now at `http://localhost:4000`.
 
 ---
 
-## Step 3 — Add the widget to HYTE Nexus
+## Step 3 — Find your PC's local IP address
+
+HYTE Nexus does not accept `localhost` as a URL. You need your PC's local network IP.
+
+Open PowerShell and run:
+```powershell
+ipconfig
+```
+Look for **IPv4 Address** under your active adapter (Wi-Fi or Ethernet), e.g. `192.168.1.42`.
+
+## Step 4 — Add the widget to HYTE Nexus
 
 1. Open **HYTE Nexus** on your PC.
 2. Go to your Y70ti display layout and click **+ Add widget**.
 3. Select **Web** (or **iFrame / URL**) as the widget type.
-4. Paste the URL:
+4. Paste the URL using your local IP (not localhost):
    ```
-   http://localhost:4000
+   http://192.168.1.42:4000
    ```
 5. Resize the widget cell to your preference — the layout adapts automatically:
    - **Narrow cell** → symbol + price only
@@ -50,7 +60,7 @@ Leave both terminals open. The widget is now at `http://localhost:4000`.
 
 ---
 
-## Step 4 — Customize tickers
+## Step 5 — Customize tickers
 
 **Touch the ⚙ gear icon** on the widget to open the settings panel. You can change tickers, refresh interval, theme, and timezone directly from the display. Settings persist across restarts.
 
@@ -63,7 +73,7 @@ http://localhost:4000/?tickers=VWRA.L,VOO,SPY,BTC-USD&refresh=30&theme=light
 
 ---
 
-## Step 5 — Run on startup (optional)
+## Step 6 — Run on startup (optional)
 
 To start both servers automatically when Windows boots, use Task Scheduler:
 

@@ -7,6 +7,7 @@
   --pos: #22c55e;
   --neg: #ef4444;
   --accent: #3b82f6;
+  --corner-radius: 16px; /* match Nexus widget corner radius */
   --radius: 10px;
   --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
@@ -29,14 +30,15 @@ html, body {
   overflow: hidden;
 }
 
-/* ── Widget shell ── */
+/* ── Widget shell — inset padding accounts for rounded corners ── */
 #widget {
   container-type: size;
   container-name: widget;
   width: 100%; height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  /* safe-area padding: corner-radius ÷ √2 ≈ 11px, plus a base gap */
+  padding: calc(var(--corner-radius) * 0.75) calc(var(--corner-radius) * 0.75) calc(var(--corner-radius) * 0.6);
   gap: 6px;
 }
 
@@ -176,6 +178,7 @@ html, body {
 
 /* Container query: very short widget — compact padding */
 @container widget (max-height: 200px) {
+  #widget { padding: 8px; }
   .ticker-card { padding: 6px 10px; gap: 0; }
   .ticker-meta { display: none; }
 }
@@ -201,13 +204,6 @@ html, body {
   overflow-y: auto;
 }
 
-#settings-panel.open,
-#settings-panel.open + #settings-overlay,
-#settings-overlay:has(+ #settings-panel.open) {
-  display: flex;
-}
-
-/* simpler toggle — show both when panel is open */
 #settings-panel.open { display: flex; }
 #settings-panel.open ~ #settings-overlay { display: block; }
 
@@ -288,6 +284,41 @@ html, body {
 }
 
 .checkbox-row span { font-size: 14px; }
+
+/* ── Color picker row ── */
+.color-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-picker-row input[type="color"] {
+  width: 44px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.color-swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform .15s, border-color .15s;
+  touch-action: manipulation;
+}
+.swatch:hover, .swatch.active { transform: scale(1.2); border-color: var(--text); }
 
 #settings-hint {
   font-size: 11px;
