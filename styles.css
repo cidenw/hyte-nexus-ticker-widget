@@ -79,6 +79,24 @@ html, body {
 #gear-btn:hover { color: var(--text); background: var(--border); }
 #gear-btn svg { width: 16px; height: 16px; }
 
+#refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .2s, background .2s, transform .4s;
+  touch-action: manipulation;
+}
+#refresh-btn:hover { color: var(--text); background: var(--border); }
+#refresh-btn svg { width: 16px; height: 16px; }
+#refresh-btn.spinning svg { animation: spin .6s linear; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* ── Status bar ── */
 #status {
   font-size: 11px;

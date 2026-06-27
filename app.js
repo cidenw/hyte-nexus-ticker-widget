@@ -256,6 +256,13 @@ function resetTimer() {
 async function init() {
   await loadConfig();
 
+  const refreshBtn = document.getElementById('refresh-btn');
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.classList.add('spinning');
+    refreshBtn.addEventListener('animationend', () => refreshBtn.classList.remove('spinning'), { once: true });
+    fetchQuotes();
+  });
+
   document.getElementById('gear-btn').addEventListener('click', openSettings);
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-save').addEventListener('click', saveSettings);
