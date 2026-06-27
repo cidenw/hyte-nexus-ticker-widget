@@ -9,7 +9,7 @@ Hosted on Vercel — no installation, no local server, nothing to maintain.
 
 ### 1 — Deploy your own instance
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/hyte-nexus-ticker-widget)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/cidenw/hyte-nexus-ticker-widget)
 
 Click the button, sign in with GitHub, and Vercel deploys it in ~30 seconds.  
 You get a URL like `https://hyte-nexus-ticker-widget.vercel.app`.
