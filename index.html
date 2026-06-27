@@ -37,24 +37,35 @@
       <button id="settings-close" aria-label="Close settings">&#x2715;</button>
     </div>
 
+    <!-- Read-only ticker list -->
     <div class="settings-group">
-      <label for="settings-tickers">Tickers (one per line)</label>
-      <textarea id="settings-tickers" placeholder="VWRA.L&#10;VOO&#10;SPY"></textarea>
+      <label>Active tickers</label>
+      <div id="settings-ticker-chips"></div>
+      <p class="settings-note">To change tickers, update the URL in HYTE Nexus:<br>
+        <code>…?tickers=VWRA.L,VOO,SPY</code>
+      </p>
     </div>
 
+    <!-- Refresh interval stepper -->
     <div class="settings-group">
-      <label for="settings-refresh">Refresh interval (seconds)</label>
-      <input type="number" id="settings-refresh" min="10" max="3600" />
+      <label>Refresh interval</label>
+      <div class="stepper-row">
+        <button class="stepper-btn" id="refresh-minus" aria-label="Decrease">−</button>
+        <span id="refresh-display"></span>
+        <button class="stepper-btn" id="refresh-plus" aria-label="Increase">+</button>
+      </div>
     </div>
 
+    <!-- Theme toggle -->
     <div class="settings-group">
-      <label for="settings-theme">Theme</label>
-      <select id="settings-theme">
-        <option value="dark">Dark</option>
-        <option value="light">Light</option>
-      </select>
+      <label>Theme</label>
+      <div class="toggle-row" id="theme-toggle">
+        <button class="toggle-btn" data-value="dark">Dark</button>
+        <button class="toggle-btn" data-value="light">Light</button>
+      </div>
     </div>
 
+    <!-- Accent color -->
     <div class="settings-group">
       <label>Accent color</label>
       <div class="color-picker-row">
@@ -63,11 +74,7 @@
       </div>
     </div>
 
-    <div class="settings-group">
-      <label for="settings-timezone">Timezone (blank = OS local)</label>
-      <input type="text" id="settings-timezone" placeholder="e.g. Europe/London, America/New_York" />
-    </div>
-
+    <!-- Show/hide toggles -->
     <div class="settings-group">
       <div class="checkbox-row">
         <input type="checkbox" id="settings-showchange" />
@@ -79,12 +86,15 @@
       </div>
     </div>
 
-    <p id="settings-hint">
-      Tickers use Yahoo Finance data (realtime/15-min delay).<br>
-      Use Yahoo symbols exactly: <code>VWRA.L</code>, <code>VOO</code>, <code>^GSPC</code>.
-    </p>
+    <!-- Copy URL -->
+    <button id="copy-url-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15">
+        <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <span id="copy-url-label">Copy Nexus URL</span>
+    </button>
 
-    <button id="settings-save">Save &amp; Refresh</button>
+    <button id="settings-save">Save &amp; Apply</button>
   </div>
   <div id="settings-overlay"></div>
 

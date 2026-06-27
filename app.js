@@ -58,6 +58,7 @@ async function loadConfig() {
   if (p.has('timezone'))   CFG.timezone       = p.get('timezone');
   if (p.has('showChange')) CFG.showChange     = p.get('showChange') !== 'false';
   if (p.has('showName'))   CFG.showName       = p.get('showName') !== 'false';
+  if (p.has('accent'))     CFG.accentColor    = p.get('accent');
 
   try {
     const saved = JSON.parse(localStorage.getItem('tickerCfg') || '{}');
@@ -183,6 +184,10 @@ function setStatus(msg) {
 }
 
 // --- Settings panel ---
+// --- Settings helpers ---
+
+const REFRESH_STEPS = [10, 15, 30, 60, 120, 300, 600];
+
 function buildSwatches() {
   const container = document.getElementById('color-swatches');
   container.innerHTML = '';
@@ -199,7 +204,6 @@ function buildSwatches() {
     });
     container.appendChild(s);
   });
-
   document.getElementById('settings-accent').addEventListener('input', e => {
     container.querySelectorAll('.swatch').forEach(el => {
       el.classList.toggle('active', el.title === e.target.value);
@@ -207,15 +211,59 @@ function buildSwatches() {
   });
 }
 
+function buildTickerChips() {
+  const el = document.getElementById('settings-ticker-chips');
+  el.innerHTML = '';
+  CFG.tickers.forEach(t => {
+    const chip = document.createElement('span');
+    chip.className = 'ticker-chip';
+    chip.textContent = t;
+    el.appendChild(chip);
+  });
+}
+
+function formatRefresh(s) {
+  return s >= 60 ? `${s / 60} min` : `${s} sec`;
+}
+
+function updateRefreshDisplay() {
+  document.getElementById('refresh-display').textContent = formatRefresh(CFG.refreshSeconds);
+}
+
+function updateThemeToggle(theme) {
+  document.querySelectorAll('#theme-toggle .toggle-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.value === theme);
+  });
+}
+
+function buildCopyUrl() {
+  const accent  = document.getElementById('settings-accent').value;
+  const theme   = document.querySelector('#theme-toggle .toggle-btn.active')?.dataset.value || CFG.theme;
+  const showChange = document.getElementById('settings-showchange').checked;
+  const showName   = document.getElementById('settings-showname').checked;
+
+  const base = `${location.origin}${location.pathname}`;
+  const p = new URLSearchParams({
+    tickers:    CFG.tickers.join(','),
+    refresh:    CFG.refreshSeconds,
+    theme,
+    showChange,
+    showName,
+  });
+  if (CFG.timezone) p.set('timezone', CFG.timezone);
+  if (accent && accent !== '#3b82f6') p.set('accent', accent);
+  return `${base}?${p.toString()}`;
+}
+
 function openSettings() {
   document.getElementById('settings-panel').classList.add('open');
-  document.getElementById('settings-tickers').value  = CFG.tickers.join('\n');
-  document.getElementById('settings-refresh').value  = CFG.refreshSeconds;
-  document.getElementById('settings-theme').value    = CFG.theme === 'light' ? 'light' : 'dark';
-  document.getElementById('settings-timezone').value = CFG.timezone || '';
-  document.getElementById('settings-accent').value   = CFG.accentColor || '#3b82f6';
-  document.getElementById('settings-showchange').checked = CFG.showChange !== false;
-  document.getElementById('settings-showname').checked   = CFG.showName  !== false;
+  document.getElementById('settings-accent').value        = CFG.accentColor || '#3b82f6';
+  document.getElementById('settings-showchange').checked  = CFG.showChange !== false;
+  document.getElementById('settings-showname').checked    = CFG.showName  !== false;
+  document.getElementById('copy-url-label').textContent   = 'Copy Nexus URL';
+  buildTickerChips();
+  updateRefreshDisplay();
+  updateThemeToggle(CFG.theme);
   buildSwatches();
 }
 
@@ -224,22 +272,19 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  const tickers       = document.getElementById('settings-tickers').value.split(/[\n,]+/).map(t => t.trim()).filter(Boolean);
-  const refreshSeconds = parseInt(document.getElementById('settings-refresh').value, 10) || 60;
-  const theme         = document.getElementById('settings-theme').value;
-  const timezone      = document.getElementById('settings-timezone').value.trim();
-  const accentColor   = document.getElementById('settings-accent').value;
-  const showChange    = document.getElementById('settings-showchange').checked;
-  const showName      = document.getElementById('settings-showname').checked;
+  const theme      = document.querySelector('#theme-toggle .toggle-btn.active')?.dataset.value || CFG.theme;
+  const accentColor = document.getElementById('settings-accent').value;
+  const showChange  = document.getElementById('settings-showchange').checked;
+  const showName    = document.getElementById('settings-showname').checked;
 
-  const patch = { tickers, refreshSeconds, theme, timezone, accentColor, showChange, showName };
+  const patch = { theme, accentColor, showChange, showName, refreshSeconds: CFG.refreshSeconds };
   Object.assign(CFG, patch);
   saveCfgToStorage(patch);
   applyTheme(theme);
   if (accentColor) applyAccentColor(accentColor);
   closeSettings();
   resetTimer();
-  fetchQuotes();
+  renderTickers();
 }
 
 // --- Timer ---
@@ -267,6 +312,36 @@ async function init() {
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-save').addEventListener('click', saveSettings);
   document.getElementById('settings-overlay').addEventListener('click', closeSettings);
+
+  // Refresh stepper
+  document.getElementById('refresh-minus').addEventListener('click', () => {
+    const idx = REFRESH_STEPS.indexOf(CFG.refreshSeconds);
+    if (idx > 0) { CFG.refreshSeconds = REFRESH_STEPS[idx - 1]; updateRefreshDisplay(); }
+  });
+  document.getElementById('refresh-plus').addEventListener('click', () => {
+    const idx = REFRESH_STEPS.indexOf(CFG.refreshSeconds);
+    if (idx < REFRESH_STEPS.length - 1) { CFG.refreshSeconds = REFRESH_STEPS[idx + 1]; updateRefreshDisplay(); }
+    else if (idx === -1) { CFG.refreshSeconds = 60; updateRefreshDisplay(); }
+  });
+
+  // Theme toggle
+  document.querySelectorAll('#theme-toggle .toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateThemeToggle(btn.dataset.value);
+      applyTheme(btn.dataset.value);
+    });
+  });
+
+  // Copy URL
+  document.getElementById('copy-url-btn').addEventListener('click', () => {
+    const url = buildCopyUrl();
+    navigator.clipboard.writeText(url).then(() => {
+      document.getElementById('copy-url-label').textContent = 'Copied!';
+      setTimeout(() => document.getElementById('copy-url-label').textContent = 'Copy Nexus URL', 2000);
+    }).catch(() => {
+      document.getElementById('copy-url-label').textContent = url;
+    });
+  });
 
   await fetchQuotes();
   resetTimer();
