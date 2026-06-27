@@ -1,36 +1,54 @@
 # Uninstall Guide
 
-## 1. Remove from HYTE Nexus
+## The easy way — Uninstaller
 
-1. Open **HYTE Nexus**.
-2. Long-press or right-click the ticker widget on your Y70ti layout.
-3. Select **Remove** / **Delete widget**.
+1. Right-click **`uninstall.ps1`** → **"Run with PowerShell"**.
+2. The uninstaller will:
+   - Stop and delete the Windows startup tasks
+   - Kill any running widget/proxy server processes
+   - Delete all installed files from `%LOCALAPPDATA%\Programs\HyteTickerWidget`
+3. Remove the widget from **HYTE Nexus** manually (long-press → Remove).
 
-## 2. Stop the servers
+---
 
-Close both terminals:
-- The one running `npx serve . -p 4000`
-- The one running `node proxy.mjs`
+## Manual uninstall
 
-If you set them up as Task Scheduler tasks:
+### 1 — Remove from HYTE Nexus
 
-1. Open **Task Scheduler**.
-2. Find the tasks you created for the widget and proxy.
-3. Right-click each → **Delete**.
+Long-press or right-click the ticker widget on your Y70ti layout → **Remove**.
 
-## 3. Clear saved settings
+### 2 — Stop and delete scheduled tasks
 
-Open a browser tab to `http://localhost:4000` (while the server is still running), open DevTools (`F12`) → **Application** → **Local Storage** → `http://localhost:4000` → delete the `tickerCfg` key.
+```powershell
+schtasks /End    /TN HyteTickerWidget-Server
+schtasks /End    /TN HyteTickerWidget-Proxy
+schtasks /Delete /TN HyteTickerWidget-Server /F
+schtasks /Delete /TN HyteTickerWidget-Proxy  /F
+```
 
-Or run this in the DevTools console:
+### 3 — Kill running servers
+
+Close any terminals running `node server.mjs` or `node proxy.mjs`, or:
+
+```powershell
+Get-Process node | Stop-Process -Force
+```
+
+(Only do this if you have no other Node.js processes you want to keep running.)
+
+### 4 — Delete installed files
+
+```powershell
+Remove-Item -Recurse -Force "$env:LOCALAPPDATA\Programs\HyteTickerWidget"
+```
+
+### 5 — Clear saved settings (optional)
+
+Open a browser at `http://localhost:4000` → DevTools (`F12`) → Application → Local Storage → delete the `tickerCfg` key.
+
+Or paste in the console:
 ```js
 localStorage.removeItem('tickerCfg');
 ```
 
-## 4. Delete the widget files
-
-```powershell
-Remove-Item -Recurse -Force C:\widgets\ticker-widget
-```
-
-Nothing else is installed system-wide — `npx serve` and `node` are standard tools left untouched.
+Nothing else is installed system-wide. Node.js itself is left untouched.

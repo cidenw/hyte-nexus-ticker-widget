@@ -1,90 +1,87 @@
 # Setup Guide
 
-## Prerequisites
+## The easy way — Installer
 
-- [Node.js](https://nodejs.org/) v18+ installed on the PC driving the Y70 Touch Infinite
+1. Download or clone this repo to your PC.
+2. Right-click **`install.ps1`** → **"Run with PowerShell"**.
+   - If you see a blue security prompt, click **"Run anyway"** (or **"More info" → "Run anyway"**).
+3. The installer will:
+   - Install Node.js automatically if it's not already on your PC
+   - Copy the widget files to `%LOCALAPPDATA%\Programs\HyteTickerWidget`
+   - Create two background services that start silently with Windows
+   - Start both services immediately
+   - Print your URL and copy it to the clipboard
+4. Open **HYTE Nexus**, add a **Web** / **iFrame** widget, and paste the URL.
+5. Done — resize the cell and use the ⚙ gear icon to customise.
+
+---
+
+## Step by step (manual, for developers)
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) v18+ on the PC driving the Y70 Touch Infinite
 - HYTE Nexus 2.0 installed and your Y70ti display detected
 
----
+### 1 — Start the proxy server
 
-## Step 1 — Download the widget
-
-```powershell
-git clone https://github.com/YOUR_USERNAME/hyte-nexus-ticker-widget.git C:\widgets\ticker-widget
-cd C:\widgets\ticker-widget
-```
-
----
-
-## Step 2 — Start both servers
-
-You need two terminals running side by side.
-
-**Terminal 1 — widget server:**
-```powershell
-npx serve . -p 4000
-```
-
-**Terminal 2 — local proxy** (handles Yahoo Finance CORS):
 ```powershell
 node proxy.mjs
 ```
 
-Leave both terminals open. The widget is now at `http://localhost:4000`.
+Leave this terminal open. The proxy fetches Yahoo Finance data server-side (required to avoid browser CORS restrictions) and also handles the "Start with Windows" toggle in the settings panel.
 
----
+### 2 — Start the widget server
 
-## Step 3 — Find your PC's local IP address
+In a second terminal:
 
-HYTE Nexus does not accept `localhost` as a URL. You need your PC's local network IP.
+```powershell
+node server.mjs
+```
 
-Open PowerShell and run:
+### 3 — Find your local IP
+
+HYTE Nexus does not resolve `localhost` in iframe URLs. You need your PC's network IP:
+
 ```powershell
 ipconfig
 ```
+
 Look for **IPv4 Address** under your active adapter (Wi-Fi or Ethernet), e.g. `192.168.1.42`.
 
-## Step 4 — Add the widget to HYTE Nexus
+### 4 — Add to HYTE Nexus
 
-1. Open **HYTE Nexus** on your PC.
-2. Go to your Y70ti display layout and click **+ Add widget**.
-3. Select **Web** (or **iFrame / URL**) as the widget type.
-4. Paste the URL using your local IP (not localhost):
+1. Open **HYTE Nexus** → your Y70ti layout → **+ Add widget**.
+2. Select **Web** (or **iFrame / URL**) widget type.
+3. Paste the URL using your local IP:
    ```
    http://192.168.1.42:4000
    ```
-5. Resize the widget cell to your preference — the layout adapts automatically:
-   - **Narrow cell** → symbol + price only
-   - **Standard cell** → symbol, name, price, change
-   - **Tall cell** → all info + market timestamps
+4. Resize the cell — the layout adapts automatically:
+   - **Narrow** → symbol + price only
+   - **Standard** → symbol, name, price, change
+   - **Tall** → all info + market timestamps
+
+### 5 — Customise
+
+Tap the **⚙ gear icon** on the widget to open the settings panel:
+- Add or remove tickers (one per line, use Yahoo Finance symbols)
+- Change refresh interval, theme, accent color, timezone
+- Toggle **"Start with Windows"** (only works when installed via `install.ps1`)
 
 ---
 
-## Step 5 — Customize tickers
+## Run on startup (manual, without installer)
 
-**Touch the ⚙ gear icon** on the widget to open the settings panel. You can change tickers, refresh interval, theme, and timezone directly from the display. Settings persist across restarts.
+Use Task Scheduler to run both servers at login with no visible window:
 
-**Via URL params** — edit the Nexus URL field directly:
-```
-http://localhost:4000/?tickers=VWRA.L,VOO,SPY,BTC-USD&refresh=30&theme=light
-```
-
-**Via config.json** — edit the file and refresh the widget.
-
----
-
-## Step 6 — Run on startup (optional)
-
-To start both servers automatically when Windows boots, use Task Scheduler:
-
-1. Open **Task Scheduler** → Create Basic Task.
-2. Trigger: **At log on**.
+1. Open **Task Scheduler** → **Create Basic Task**.
+2. Trigger: **At log on** (current user only).
 3. Action: **Start a program**
-   - Program: `node`
-   - Arguments: `C:\widgets\ticker-widget\proxy.mjs`
-4. Repeat for the widget server, using:
-   - Program: `npx`
-   - Arguments: `serve C:\widgets\ticker-widget -p 4000`
+   - Program: `node` (full path, e.g. `C:\Program Files\nodejs\node.exe`)
+   - Arguments: `"C:\path\to\ticker-widget\proxy.mjs"`
+4. In **Properties → Settings**: uncheck "Stop task if it runs longer than".
+5. Repeat for `server.mjs` with a 5-second delay.
 
 ---
 
@@ -93,8 +90,9 @@ To start both servers automatically when Windows boots, use Task Scheduler:
 | Symptom | Fix |
 |---|---|
 | Widget shows `—` forever | Make sure both servers are running (ports 4000 and 4001) |
-| CORS error in browser console | `proxy.mjs` is not running — start it with `node proxy.mjs` |
-| `proxy.mjs` port 4001 already in use | Change `PORT` in `proxy.mjs` and update `PROXY_BASE` in `app.js` to match |
-| Ticker not found / wrong price | Verify the symbol on [finance.yahoo.com](https://finance.yahoo.com) — use the exact Yahoo symbol |
-| Timestamps in wrong timezone | Open ⚙ settings and enter your timezone, e.g. `Europe/London` |
-| Port 4000 already in use | Change `-p 4000` in the serve command and update the Nexus URL |
+| CORS error | `proxy.mjs` not running — start it with `node proxy.mjs` |
+| Nexus shows blank / won't load | Use your local IP, not `localhost` |
+| "Start with Windows" greyed out | Run `install.ps1` first to register the scheduled tasks |
+| Port already in use | Change `PORT` in `server.mjs` / `PROXY_PORT` in `proxy.mjs` and update Nexus URL |
+| Wrong timezone on timestamps | Open ⚙ settings → enter IANA timezone e.g. `Europe/London` |
+| PowerShell blocked by policy | Run: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` then retry |

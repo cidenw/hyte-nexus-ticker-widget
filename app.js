@@ -216,7 +216,7 @@ function buildSwatches() {
   });
 }
 
-function openSettings() {
+async function openSettings() {
   document.getElementById('settings-panel').classList.add('open');
   document.getElementById('settings-tickers').value = CFG.tickers.join('\n');
   document.getElementById('settings-refresh').value = CFG.refreshSeconds;
@@ -226,6 +226,42 @@ function openSettings() {
   document.getElementById('settings-timezone').value = CFG.timezone || '';
   document.getElementById('settings-accent').value = CFG.accentColor || '#3b82f6';
   buildSwatches();
+  await loadStartupStatus();
+}
+
+// --- Startup toggle ---
+async function loadStartupStatus() {
+  const group = document.getElementById('startup-group');
+  const checkbox = document.getElementById('settings-startup');
+  const label = document.getElementById('startup-label');
+  try {
+    const res = await fetch('http://localhost:4001/api/startup');
+    if (!res.ok) throw new Error();
+    const { enabled } = await res.json();
+    checkbox.checked = enabled;
+    checkbox.disabled = false;
+    label.textContent = 'Start with Windows';
+  } catch {
+    checkbox.checked = false;
+    checkbox.disabled = true;
+    label.textContent = 'Start with Windows (run install.ps1 to enable)';
+    group.style.opacity = '0.5';
+  }
+}
+
+async function toggleStartup(enabled) {
+  const label = document.getElementById('startup-label');
+  label.textContent = 'Updating...';
+  try {
+    await fetch('http://localhost:4001/api/startup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled }),
+    });
+    label.textContent = 'Start with Windows';
+  } catch {
+    label.textContent = 'Start with Windows (failed to update)';
+  }
 }
 
 function closeSettings() {
@@ -270,6 +306,7 @@ async function init() {
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-save').addEventListener('click', saveSettings);
   document.getElementById('settings-overlay').addEventListener('click', closeSettings);
+  document.getElementById('settings-startup').addEventListener('change', e => toggleStartup(e.target.checked));
 
   await fetchQuotes();
   resetTimer();

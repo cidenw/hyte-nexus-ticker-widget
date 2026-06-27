@@ -1,51 +1,56 @@
 # HYTE Nexus Ticker Widget
 
-A lightweight, open-source stock ticker widget for the **HYTE Y70 Touch Infinite** display running **HYTE Nexus 2.0**. It renders live prices in a responsive layout that adapts to any grid cell size you assign in Nexus.
+A stock ticker widget for the **HYTE Y70 Touch Infinite** display running **HYTE Nexus 2.0**.  
+Live prices, responsive layout, touch-friendly settings — and a one-click installer.
+
+## How it works on the Y70 Touch Infinite
+
+1. Run the installer (see Quick start).
+2. In **HYTE Nexus**, add a **Web / iFrame** widget and paste the URL the installer gives you.
+3. Resize the cell — the layout adapts automatically to any size.
+4. Tap the **⚙ gear icon** on the display to change tickers, theme, colors, or timezone without touching any files.
 
 ## Features
 
 - Live prices via Yahoo Finance — no API key required
-- Tracks any ticker Yahoo supports: ETFs, stocks, indices (`^GSPC`, `^NDX`)
-- Responsive layout via CSS container queries — adapts from a tiny cell to a tall column
-- Dark / light theme
-- Configurable timezone for market timestamps (defaults to your OS timezone)
-- Touch-friendly settings panel — change tickers without redeploying
-- Three-layer config: `config.json` → URL params → in-widget touch settings
-
-## How it works on the Y70 Touch Infinite
-
-1. Run the two servers on your PC (see Quick start below).
-2. In **HYTE Nexus**, add a **Web / iFrame** widget and paste `http://localhost:4000` as the URL.
-3. Resize the cell on the display — the widget layout adapts automatically.
-4. Tap the **⚙ gear icon** directly on the display to change tickers, theme, or timezone without touching any files.
-
-See [SETUP.md](SETUP.md) for step-by-step Nexus instructions and startup automation.
-
----
-
-## Default tickers
-
-`VWRA.L` · `VOO` · `SPY`
+- Tracks any Yahoo Finance ticker: ETFs, stocks, indices, crypto
+- Adapts to small, medium, or tall Nexus grid cells (CSS container queries)
+- Dark / light theme with custom accent color picker
+- Configurable timezone for market timestamps (defaults to OS timezone)
+- Touch-friendly settings panel with "Start with Windows" toggle
+- One-click installer and uninstaller for non-developers
 
 ## Quick start
 
+### Option A — Installer (recommended, no tech knowledge required)
+
 ```powershell
-git clone https://github.com/YOUR_USERNAME/hyte-nexus-ticker-widget.git
-cd hyte-nexus-ticker-widget
-
-# Terminal 1 — serve the widget
-npx serve . -p 4000
-
-# Terminal 2 — local proxy (required, handles Yahoo Finance CORS)
-node proxy.mjs
+# Right-click install.ps1 → "Run with PowerShell"
+# Or in a terminal:
+.\install.ps1
 ```
 
-Then open `http://localhost:4000` in a browser to verify it works.
+The installer will:
+- Install Node.js automatically if not present
+- Copy the widget to `%LOCALAPPDATA%\Programs\HyteTickerWidget`
+- Set up two background services that start with Windows
+- Print (and copy to clipboard) the URL to paste into Nexus
 
-> **Nexus URL:** Use your PC's local IP instead of `localhost` — Nexus doesn't resolve it.
-> Find it with `ipconfig` (look for IPv4 Address), e.g. `http://192.168.1.42:4000`.
+### Option B — Manual (developers)
 
-See [SETUP.md](SETUP.md) for full Nexus integration steps.
+```powershell
+# Terminal 1 — proxy server (handles Yahoo Finance CORS)
+node proxy.mjs
+
+# Terminal 2 — widget server
+node server.mjs
+```
+
+Then find your local IP (`ipconfig` → IPv4 Address) and open `http://YOUR_IP:4000`.
+
+> **Why local IP instead of localhost?** HYTE Nexus does not resolve `localhost` in the iframe URL field. Use your PC's local network IP (e.g. `192.168.1.42`).
+
+---
 
 ## Configuration
 
@@ -64,37 +69,28 @@ See [SETUP.md](SETUP.md) for full Nexus integration steps.
 
 | Key | Description | Default |
 |---|---|---|
-| `tickers` | Array of Yahoo Finance ticker symbols | `["VWRA.L","VOO","SPY"]` |
+| `tickers` | Yahoo Finance ticker symbols | `["VWRA.L","VOO","SPY"]` |
 | `refreshSeconds` | Price refresh interval in seconds | `60` |
 | `theme` | `"dark"` or `"light"` | `"dark"` |
-| `timezone` | IANA timezone string for timestamps. Empty = OS local | `""` |
+| `timezone` | IANA timezone (empty = OS local) | `""` |
 | `showChange` | Show price change and % | `true` |
 | `showName` | Show asset name | `true` |
 
 ### URL query params (override config.json)
 
-Append to the Nexus iframe URL:
-
 ```
-http://localhost:4000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light&timezone=Europe/London
+http://192.168.1.42:4000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light&timezone=Europe/London
 ```
 
-| Param | Example |
-|---|---|
-| `tickers` | `VWRA.L,VOO,SPY` |
-| `refresh` | `30` |
-| `theme` | `light` or `dark` |
-| `timezone` | `Europe/London`, `America/New_York` |
-| `showChange` | `true` / `false` |
-| `showName` | `true` / `false` |
+### In-widget settings (touch, persisted to localStorage)
 
-### In-widget settings panel
+Tap **⚙** on the display to change tickers, theme, accent color, timezone, and the Windows startup toggle — no files to edit.
 
-Tap the ⚙ gear icon to open a touch-friendly panel. All settings are saved to `localStorage` and persist across refreshes.
+---
 
 ## Ticker symbols
 
-Use Yahoo Finance symbol format exactly:
+Use Yahoo Finance format exactly:
 
 | Asset | Symbol |
 |---|---|
@@ -103,23 +99,24 @@ Use Yahoo Finance symbol format exactly:
 | Indices | `^GSPC`, `^NDX`, `^FTSE` |
 | Crypto | `BTC-USD`, `ETH-USD` |
 
-## Architecture
+---
+
+## Project structure
 
 ```
 ticker-widget/
-  index.html     # Widget markup + settings dialog
-  styles.css     # Responsive styles (CSS container queries)
-  app.js         # Config resolution, fetch, render, settings
-  config.json    # Default configuration
-  proxy.mjs      # Local proxy — forwards requests to Yahoo Finance (avoids CORS)
-  package.json   # npm scripts: serve, proxy
-  README.md
-  SETUP.md
-  UNINSTALL.md
-  LICENSE        # MIT
+  index.html      Widget markup + settings dialog
+  styles.css      Responsive styles (CSS container queries)
+  app.js          Config, fetch, render, settings, startup toggle
+  config.json     Default configuration
+  server.mjs      Static file server (port 4000, no external deps)
+  proxy.mjs       Yahoo Finance proxy + startup management API (port 4001)
+  install.ps1     One-click Windows installer
+  uninstall.ps1   One-click Windows uninstaller
+  package.json    npm scripts for manual use
+  README.md / SETUP.md / UNINSTALL.md
+  LICENSE         MIT
 ```
-
-**Why a local proxy?** Browsers block direct `fetch()` calls to Yahoo Finance due to CORS restrictions. `proxy.mjs` is a minimal Node.js server that forwards requests server-side and adds the required CORS headers. It only allowlists `query1.finance.yahoo.com`.
 
 ## License
 
