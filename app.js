@@ -1,4 +1,4 @@
-// Same-origin API — widget.ps1 serves both the HTML and this endpoint on port 4000
+// Vercel serverless function — same origin, no CORS issues
 const PROXY_BASE = '/api/quote?ticker=';
 
 // Preset accent swatches
@@ -40,11 +40,6 @@ function applyAccentColor(hex) {
   }
 }
 
-function resetAccentColor() {
-  const root = document.documentElement;
-  ['--accent', '--bg', '--surface', '--border'].forEach(v => root.style.removeProperty(v));
-}
-
 // --- Config resolution ---
 let CFG = {};
 
@@ -57,12 +52,12 @@ async function loadConfig() {
   }
 
   const p = new URLSearchParams(location.search);
-  if (p.has('tickers')) CFG.tickers = p.get('tickers').split(',').map(t => t.trim()).filter(Boolean);
-  if (p.has('refresh')) CFG.refreshSeconds = parseInt(p.get('refresh'), 10) || CFG.refreshSeconds;
-  if (p.has('theme')) CFG.theme = p.get('theme');
-  if (p.has('showChange')) CFG.showChange = p.get('showChange') !== 'false';
-  if (p.has('showName')) CFG.showName = p.get('showName') !== 'false';
-  if (p.has('timezone')) CFG.timezone = p.get('timezone');
+  if (p.has('tickers'))    CFG.tickers       = p.get('tickers').split(',').map(t => t.trim()).filter(Boolean);
+  if (p.has('refresh'))    CFG.refreshSeconds = parseInt(p.get('refresh'), 10) || CFG.refreshSeconds;
+  if (p.has('theme'))      CFG.theme          = p.get('theme');
+  if (p.has('timezone'))   CFG.timezone       = p.get('timezone');
+  if (p.has('showChange')) CFG.showChange     = p.get('showChange') !== 'false';
+  if (p.has('showName'))   CFG.showName       = p.get('showName') !== 'false';
 
   try {
     const saved = JSON.parse(localStorage.getItem('tickerCfg') || '{}');
@@ -98,16 +93,13 @@ async function fetchOneTicker(ticker) {
   if (!result) throw new Error('No data');
   const meta = result.meta;
   const price = meta.regularMarketPrice;
-  const prev = meta.chartPreviousClose ?? meta.previousClose ?? price;
+  const prev  = meta.chartPreviousClose ?? meta.previousClose ?? price;
   const change = price - prev;
   const changePct = prev !== 0 ? (change / prev) * 100 : 0;
   return {
     symbol: meta.symbol,
     name: meta.longName || meta.shortName || '',
-    price,
-    prev,
-    change,
-    changePct,
+    price, change, changePct,
     currency: meta.currency || '',
     time: formatTime(meta.regularMarketTime * 1000),
     stale: false,
@@ -141,7 +133,7 @@ function renderTickers() {
 
   CFG.tickers.forEach(ticker => {
     const key = ticker.toUpperCase();
-    const q = lastQuotes[key];
+    const q   = lastQuotes[key];
     const card = document.createElement('div');
     card.className = 'ticker-card' + (q?.stale ? ' stale' : '');
 
@@ -162,7 +154,7 @@ function renderTickers() {
             ${pos ? '+' : ''}${q.change.toFixed(2)} (${pos ? '+' : ''}${q.changePct.toFixed(2)}%)
           </span>` : ''}
         </div>
-        <div class="ticker-meta">${q.currency} &middot; ${q.time}${q.stale ? ' &middot; stale' : ''}</div>`;
+        <div class="ticker-meta">${q.currency} · ${q.time}${q.stale ? ' · stale' : ''}</div>`;
     }
 
     list.appendChild(card);
@@ -171,7 +163,7 @@ function renderTickers() {
 
 function formatPrice(n) {
   if (n >= 1000) return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (n >= 1) return n.toFixed(2);
+  if (n >= 1)    return n.toFixed(2);
   return n.toFixed(4);
 }
 
@@ -208,7 +200,6 @@ function buildSwatches() {
     container.appendChild(s);
   });
 
-  // Sync swatch highlight when color picker changes
   document.getElementById('settings-accent').addEventListener('input', e => {
     container.querySelectorAll('.swatch').forEach(el => {
       el.classList.toggle('active', el.title === e.target.value);
@@ -216,52 +207,16 @@ function buildSwatches() {
   });
 }
 
-async function openSettings() {
+function openSettings() {
   document.getElementById('settings-panel').classList.add('open');
-  document.getElementById('settings-tickers').value = CFG.tickers.join('\n');
-  document.getElementById('settings-refresh').value = CFG.refreshSeconds;
-  document.getElementById('settings-theme').value = CFG.theme === 'light' ? 'light' : 'dark';
-  document.getElementById('settings-showchange').checked = CFG.showChange !== false;
-  document.getElementById('settings-showname').checked = CFG.showName !== false;
+  document.getElementById('settings-tickers').value  = CFG.tickers.join('\n');
+  document.getElementById('settings-refresh').value  = CFG.refreshSeconds;
+  document.getElementById('settings-theme').value    = CFG.theme === 'light' ? 'light' : 'dark';
   document.getElementById('settings-timezone').value = CFG.timezone || '';
-  document.getElementById('settings-accent').value = CFG.accentColor || '#3b82f6';
+  document.getElementById('settings-accent').value   = CFG.accentColor || '#3b82f6';
+  document.getElementById('settings-showchange').checked = CFG.showChange !== false;
+  document.getElementById('settings-showname').checked   = CFG.showName  !== false;
   buildSwatches();
-  await loadStartupStatus();
-}
-
-// --- Startup toggle ---
-async function loadStartupStatus() {
-  const group = document.getElementById('startup-group');
-  const checkbox = document.getElementById('settings-startup');
-  const label = document.getElementById('startup-label');
-  try {
-    const res = await fetch('/api/startup');
-    if (!res.ok) throw new Error();
-    const { enabled } = await res.json();
-    checkbox.checked = enabled;
-    checkbox.disabled = false;
-    label.textContent = 'Start with Windows';
-  } catch {
-    checkbox.checked = false;
-    checkbox.disabled = true;
-    label.textContent = 'Start with Windows (run install.ps1 to enable)';
-    group.style.opacity = '0.5';
-  }
-}
-
-async function toggleStartup(enabled) {
-  const label = document.getElementById('startup-label');
-  label.textContent = 'Updating...';
-  try {
-    await fetch('/api/startup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ enabled }),
-    });
-    label.textContent = 'Start with Windows';
-  } catch {
-    label.textContent = 'Start with Windows (failed to update)';
-  }
 }
 
 function closeSettings() {
@@ -269,16 +224,15 @@ function closeSettings() {
 }
 
 function saveSettings() {
-  const tickers = document.getElementById('settings-tickers').value
-    .split(/[\n,]+/).map(t => t.trim()).filter(Boolean);
+  const tickers       = document.getElementById('settings-tickers').value.split(/[\n,]+/).map(t => t.trim()).filter(Boolean);
   const refreshSeconds = parseInt(document.getElementById('settings-refresh').value, 10) || 60;
-  const theme = document.getElementById('settings-theme').value;
-  const showChange = document.getElementById('settings-showchange').checked;
-  const showName = document.getElementById('settings-showname').checked;
-  const timezone = document.getElementById('settings-timezone').value.trim();
-  const accentColor = document.getElementById('settings-accent').value;
+  const theme         = document.getElementById('settings-theme').value;
+  const timezone      = document.getElementById('settings-timezone').value.trim();
+  const accentColor   = document.getElementById('settings-accent').value;
+  const showChange    = document.getElementById('settings-showchange').checked;
+  const showName      = document.getElementById('settings-showname').checked;
 
-  const patch = { tickers, refreshSeconds, theme, showChange, showName, timezone, accentColor };
+  const patch = { tickers, refreshSeconds, theme, timezone, accentColor, showChange, showName };
   Object.assign(CFG, patch);
   saveCfgToStorage(patch);
   applyTheme(theme);
@@ -306,7 +260,6 @@ async function init() {
   document.getElementById('settings-close').addEventListener('click', closeSettings);
   document.getElementById('settings-save').addEventListener('click', saveSettings);
   document.getElementById('settings-overlay').addEventListener('click', closeSettings);
-  document.getElementById('settings-startup').addEventListener('change', e => toggleStartup(e.target.checked));
 
   await fetchQuotes();
   resetTimer();

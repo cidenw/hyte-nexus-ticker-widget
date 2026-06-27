@@ -1,83 +1,64 @@
 # Setup Guide
 
-## Requirements
+## Prerequisites
 
-- Windows 11 (PowerShell is built in — nothing else to install)
+- A free [Vercel account](https://vercel.com) (sign up with GitHub)
 - HYTE Nexus 2.0 with your Y70 Touch Infinite connected
 
 ---
 
-## Installer (recommended)
+## Step 1 — Deploy to Vercel
 
-1. Download or clone this repo to your PC.
-2. Right-click **`install.ps1`** → **Run with PowerShell**.
-   - If you see a blue security warning, click **More info → Run anyway**.
-3. Wait for the installer to finish — it prints something like:
+Click the deploy button in the README, or:
 
-   ```
-   Paste this URL into HYTE Nexus as a Web widget:
+1. Fork this repo on GitHub
+2. Go to [vercel.com/new](https://vercel.com/new)
+3. Import your forked repo
+4. Click **Deploy** — no settings to change
 
-      http://192.168.1.42:4000
-
-   (URL copied to clipboard)
-   ```
-
-4. Open **HYTE Nexus** on your PC.
-5. On the Y70ti layout, click **+ Add widget** → choose **Web** (or **iFrame / URL**).
-6. Paste the URL from step 3 into the URL field.
-7. Resize the widget cell to your liking — the layout adapts automatically.
-
-> **Why not `localhost`?** HYTE Nexus resolves the URL from the display's own context and doesn't recognise `localhost`. The installer automatically finds and gives you your PC's local network IP.
+Vercel gives you a URL like `https://hyte-nexus-ticker-widget-abc123.vercel.app`.
 
 ---
 
-## What the installer does
+## Step 2 — Add to HYTE Nexus
 
-- Copies widget files to `%LOCALAPPDATA%\Programs\HyteTickerWidget`
-- Creates a Windows Task Scheduler task called **HyteTickerWidget** that starts `widget.ps1` silently at login
-- Starts the server immediately so you don't need to reboot
-- Prints and copies the Nexus URL to your clipboard
+1. Open **HYTE Nexus** on your PC
+2. On the Y70ti layout, click **+ Add widget**
+3. Select **Web** (or **iFrame / URL**) widget type
+4. Paste your Vercel URL into the URL field
+5. Resize the cell — the widget adapts automatically:
+   - **Narrow cell** → symbol + price only
+   - **Standard** → symbol, name, price, change
+   - **Tall** → all info + timestamps
 
 ---
 
-## Customising the widget
+## Step 3 — Customise
 
-### From the touch display (easiest)
-
-Tap the **⚙ gear icon** on the widget to open the settings panel:
+### From the display (tap ⚙)
 
 | Setting | What it does |
 |---|---|
-| Tickers | Add/remove tickers (one per line, use Yahoo Finance symbols) |
+| Tickers | One per line — use Yahoo Finance symbols |
 | Refresh interval | How often prices update (seconds) |
 | Theme | Dark or light |
-| Accent color | Pick a color — backgrounds are derived automatically |
-| Timezone | Leave blank for your PC's local time, or enter e.g. `Europe/London` |
-| Start with Windows | Toggle auto-start on or off without touching any files |
+| Accent color | Pick any color — backgrounds derive from it |
+| Timezone | Blank = your PC's local time, or e.g. `Europe/London` |
+| Show change / name | Toggle extra info |
 
-### Via URL params
+Settings are saved to the widget's local storage and survive page refreshes.
 
-Append parameters to the Nexus URL:
+### Via URL (no redeploy needed)
+
+Edit the URL in the Nexus widget field:
 
 ```
-http://192.168.1.42:4000/?tickers=VWRA.L,VOO,SPY&refresh=30&theme=light
+https://your-app.vercel.app/?tickers=VWRA.L,VOO,SPY&timezone=Europe/London&theme=dark
 ```
 
-### Via config.json
+### Change defaults permanently
 
-Edit `%LOCALAPPDATA%\Programs\HyteTickerWidget\config.json` and refresh the widget.
-
----
-
-## Manual run (developers)
-
-No installer needed — just run:
-
-```powershell
-powershell -File widget.ps1
-```
-
-The terminal will print the URL to use. Press `Ctrl+C` to stop.
+Fork the repo → edit `config.json` → Vercel redeploys automatically on push.
 
 ---
 
@@ -85,9 +66,7 @@ The terminal will print the URL to use. Press `Ctrl+C` to stop.
 
 | Symptom | Fix |
 |---|---|
-| Widget shows `—` / loading forever | The server isn't running. Re-run `install.ps1` or start `widget.ps1` manually |
-| Nexus shows blank / can't connect | Make sure you're using the local IP (e.g. `192.168.1.42`), not `localhost` |
-| IP changed and widget stopped working | Re-run `install.ps1` — it detects the current IP |
-| "Start with Windows" toggle greyed out | Run `install.ps1` first to register the scheduled task |
-| PowerShell script blocked | Open PowerShell and run: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
-| Port 4000 already in use | Edit `widget.ps1`, change `$Port = 4000` to another port, update Nexus URL |
+| Prices not loading | Check your Vercel deployment logs — Yahoo Finance may be rate-limiting |
+| Widget shows blank in Nexus | Make sure the URL starts with `https://` |
+| Timestamps in wrong timezone | Open ⚙ settings → enter IANA timezone e.g. `Europe/London` |
+| Want different default tickers | Edit `config.json` in your fork and push — Vercel redeploys automatically |

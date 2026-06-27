@@ -1,7 +1,0 @@
-{
-  "name": "hyte-nexus-ticker-widget",
-  "version": "2.0.0",
-  "description": "Stock ticker widget for HYTE Nexus Y70 Touch Infinite display. No Node.js required.",
-  "keywords": ["hyte", "nexus", "widget", "ticker", "stock", "powershell"],
-  "license": "MIT"
-}

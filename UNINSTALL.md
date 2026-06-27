@@ -1,49 +1,17 @@
 # Uninstall Guide
 
-## Easy way
+## Remove from HYTE Nexus
 
-1. Right-click **`uninstall.ps1`** → **Run with PowerShell**.
-2. Remove the widget tile from **HYTE Nexus** manually (long-press → Remove).
+Long-press or right-click the ticker widget on your Y70ti layout → **Remove**.
 
-Done. Nothing else is left on your PC.
+## Remove the Vercel deployment
 
----
+1. Go to your [Vercel dashboard](https://vercel.com/dashboard)
+2. Open the project → **Settings** → **Advanced**
+3. Click **Delete Project**
 
-## What the uninstaller does
+## Clear saved settings
 
-- Stops the running widget server
-- Deletes the **HyteTickerWidget** scheduled task (removes it from auto-start)
-- Removes all installed files from `%LOCALAPPDATA%\Programs\HyteTickerWidget`
+The widget stores your customisations in the Nexus browser's localStorage. These are cleared automatically when Nexus removes the widget. To clear manually while the widget is open, open browser DevTools → Application → Local Storage → delete the `tickerCfg` key.
 
----
-
-## Manual uninstall
-
-### 1 — Remove from HYTE Nexus
-
-Long-press or right-click the widget tile → **Remove**.
-
-### 2 — Delete the scheduled task
-
-```powershell
-schtasks /End    /TN HyteTickerWidget
-schtasks /Delete /TN HyteTickerWidget /F
-```
-
-### 3 — Stop the server
-
-```powershell
-Get-Process powershell | Where-Object {
-    (Get-WmiObject Win32_Process -Filter "ProcessId=$($_.Id)").CommandLine -like "*HyteTickerWidget*"
-} | Stop-Process -Force
-```
-
-### 4 — Delete files
-
-```powershell
-Remove-Item -Recurse -Force "$env:LOCALAPPDATA\Programs\HyteTickerWidget"
-```
-
-### 5 — Clear saved settings (optional)
-
-The widget stores your customisations in the browser's localStorage. These are cleared automatically when Nexus removes the widget tile. To clear manually, open the widget URL in a browser → DevTools (`F12`) → Application → Local Storage → delete `tickerCfg`.
+That's it — nothing is installed on your PC.
