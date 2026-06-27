@@ -315,11 +315,63 @@ html, body {
   background: var(--border);
   color: var(--text);
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 4px 8px 4px 12px;
   font-size: 13px;
   font-weight: 600;
   letter-spacing: .04em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 50%;
+  touch-action: manipulation;
+  display: flex;
+  align-items: center;
+}
+.chip-remove:hover { color: var(--neg); }
+
+.ticker-add-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ticker-add-row input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: var(--font);
+  outline: none;
+  min-width: 0;
+}
+.ticker-add-row input:focus { border-color: var(--accent); }
+
+#ticker-add-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+#ticker-add-btn:hover { opacity: .85; }
 
 .settings-note {
   font-size: 11px;

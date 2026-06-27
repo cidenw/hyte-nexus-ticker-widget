@@ -37,13 +37,15 @@
       <button id="settings-close" aria-label="Close settings">&#x2715;</button>
     </div>
 
-    <!-- Read-only ticker list -->
+    <!-- Editable ticker list -->
     <div class="settings-group">
-      <label>Active tickers</label>
+      <label>Tickers</label>
       <div id="settings-ticker-chips"></div>
-      <p class="settings-note">To change tickers, update the URL in HYTE Nexus:<br>
-        <code>…?tickers=VWRA.L,VOO,SPY</code>
-      </p>
+      <div class="ticker-add-row">
+        <input type="text" id="ticker-add-input" placeholder="e.g. AAPL, BTC-USD"
+          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" />
+        <button id="ticker-add-btn">Add</button>
+      </div>
     </div>
 
     <!-- Ticker directory -->

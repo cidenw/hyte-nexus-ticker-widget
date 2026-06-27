@@ -51,19 +51,21 @@ async function loadConfig() {
     CFG = { tickers: ['VWRA.L', 'VOO', 'SPY'], refreshSeconds: 60, theme: 'dark', showChange: true, showName: true };
   }
 
-  const p = new URLSearchParams(location.search);
-  if (p.has('tickers'))    CFG.tickers       = p.get('tickers').split(',').map(t => t.trim()).filter(Boolean);
-  if (p.has('refresh'))    CFG.refreshSeconds = parseInt(p.get('refresh'), 10) || CFG.refreshSeconds;
-  if (p.has('theme'))      CFG.theme          = p.get('theme');
-  if (p.has('timezone'))   CFG.timezone       = p.get('timezone');
-  if (p.has('showChange')) CFG.showChange     = p.get('showChange') !== 'false';
-  if (p.has('showName'))   CFG.showName       = p.get('showName') !== 'false';
-  if (p.has('accent'))     CFG.accentColor    = p.get('accent');
-
+  // localStorage next (user's saved preferences)
   try {
     const saved = JSON.parse(localStorage.getItem('tickerCfg') || '{}');
     Object.assign(CFG, saved);
   } catch {}
+
+  // URL params last — always override everything so the Nexus URL is the source of truth
+  const p = new URLSearchParams(location.search);
+  if (p.has('tickers'))    CFG.tickers        = p.get('tickers').split(',').map(t => t.trim()).filter(Boolean);
+  if (p.has('refresh'))    CFG.refreshSeconds  = parseInt(p.get('refresh'), 10) || CFG.refreshSeconds;
+  if (p.has('theme'))      CFG.theme           = p.get('theme');
+  if (p.has('timezone'))   CFG.timezone        = p.get('timezone');
+  if (p.has('showChange')) CFG.showChange      = p.get('showChange') !== 'false';
+  if (p.has('showName'))   CFG.showName        = p.get('showName') !== 'false';
+  if (p.has('accent'))     CFG.accentColor     = p.get('accent');
 
   applyTheme(CFG.theme);
   if (CFG.accentColor) applyAccentColor(CFG.accentColor);
@@ -214,12 +216,26 @@ function buildSwatches() {
 function buildTickerChips() {
   const el = document.getElementById('settings-ticker-chips');
   el.innerHTML = '';
-  CFG.tickers.forEach(t => {
+  CFG.tickers.forEach((t, i) => {
     const chip = document.createElement('span');
     chip.className = 'ticker-chip';
-    chip.textContent = t;
+    chip.innerHTML = `${t}<button class="chip-remove" aria-label="Remove ${t}" data-index="${i}">&times;</button>`;
     el.appendChild(chip);
   });
+  el.querySelectorAll('.chip-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      CFG.tickers.splice(Number(btn.dataset.index), 1);
+      buildTickerChips();
+    });
+  });
+}
+
+function addTicker() {
+  const input = document.getElementById('ticker-add-input');
+  const symbols = input.value.split(/[\s,]+/).map(s => s.trim().toUpperCase()).filter(Boolean);
+  symbols.forEach(s => { if (!CFG.tickers.includes(s)) CFG.tickers.push(s); });
+  input.value = '';
+  buildTickerChips();
 }
 
 function formatRefresh(s) {
@@ -277,14 +293,14 @@ function saveSettings() {
   const showChange  = document.getElementById('settings-showchange').checked;
   const showName    = document.getElementById('settings-showname').checked;
 
-  const patch = { theme, accentColor, showChange, showName, refreshSeconds: CFG.refreshSeconds };
+  const patch = { tickers: CFG.tickers, theme, accentColor, showChange, showName, refreshSeconds: CFG.refreshSeconds };
   Object.assign(CFG, patch);
   saveCfgToStorage(patch);
   applyTheme(theme);
   if (accentColor) applyAccentColor(accentColor);
   closeSettings();
   resetTimer();
-  renderTickers();
+  fetchQuotes();
 }
 
 // --- Timer ---
@@ -330,6 +346,12 @@ async function init() {
       updateThemeToggle(btn.dataset.value);
       applyTheme(btn.dataset.value);
     });
+  });
+
+  // Add ticker
+  document.getElementById('ticker-add-btn').addEventListener('click', addTicker);
+  document.getElementById('ticker-add-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addTicker(); }
   });
 
   // Ticker directory collapsible
